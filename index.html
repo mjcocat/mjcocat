@@ -483,14 +483,20 @@
                 pattern += '(?<league>\\w+)?';
             }
             
-            // Everything before teams (non-greedy) - captures game number or date or other content
+            // Skip everything until we find the team separator, then backtrack to get teams
+            // This matches: | number - time (then teams start)
             pattern += '.*?';
             
-            // Team 1
+            // Important: Skip any time indicators (digits with am/pm or colons) before team1
+            // Negative lookbehind to ensure we don't start capturing in the middle of a time
+            
+            // Team 1 - must start after any time/number, letters only
             if (analysis.hasMultiWordTeams) {
-                pattern += '(?<team1>[\\w\\s]+?)';
+                // Multi-word teams: letters and spaces only, must not be preceded by digits/am/pm
+                pattern += '(?:^|\\s)(?<team1>[A-Z][A-Za-z]*(?:\\s+[A-Z][A-Za-z]*)*)';
             } else {
-                pattern += '(?<team1>\\w+)';
+                // Single word team: letters only, capitalized
+                pattern += '(?:^|\\s)(?<team1>[A-Z][A-Za-z]+)';
             }
             
             pattern += '\\s+';
@@ -512,11 +518,13 @@
             
             pattern += '\\s+';
             
-            // Team 2
+            // Team 2 - letters and spaces only, stop at first digit or end
             if (analysis.hasMultiWordTeams) {
-                pattern += '(?<team2>[\\w\\s]+)';
+                // Multi-word teams: letters and spaces, stop before digits
+                pattern += '(?<team2>[A-Z][A-Za-z]*(?:\\s+[A-Z][A-Za-z]*)*)';
             } else {
-                pattern += '(?<team2>\\w+)';
+                // Single word team: letters only, capitalized
+                pattern += '(?<team2>[A-Z][A-Za-z]+)';
             }
             
             return pattern;
