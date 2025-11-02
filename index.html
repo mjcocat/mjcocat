@@ -113,6 +113,9 @@
             border-radius: 6px;
             cursor: move;
             user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
             font-family: 'Monaco', 'Courier New', monospace;
             font-size: 14px;
             transition: all 0.2s;
@@ -122,6 +125,12 @@
         .word:hover {
             background: #4b5563;
             transform: translateY(-2px);
+        }
+
+        .word.selected {
+            background: #3b82f6;
+            border-color: #2563eb;
+            color: white;
         }
 
         .word.dragging {
@@ -311,16 +320,17 @@
         <div class="header">
             <h1>🏈 Sports Game Regex Generator</h1>
             <p>Drag and drop words to build your regex patterns</p>
-            <p class="version">version-11012025.2015</p>
+            <p class="version">version-11012025.2140</p>
         </div>
 
         <!-- Instructions -->
         <div class="instructions">
             <div class="instructions-title">📋 How to Use:</div>
             1. Enter your sample game string below<br>
-            2. Drag words into the appropriate zones (League, Team 1, Team 2, Time, Date)<br>
-            3. Click "Generate Regex" to create your patterns<br>
-            4. Copy and paste the patterns into Dispatcharr
+            2. Click words to select them (Shift+Click to select multiple)<br>
+            3. Drag selected words into the appropriate zones (League, Team 1, Team 2, Time, Date)<br>
+            4. Click "Generate Regex" to create your patterns<br>
+            5. Copy and paste the patterns into Dispatcharr
         </div>
 
         <!-- Input Section -->
@@ -419,6 +429,7 @@
     <script>
         let draggedElement = null;
         let wordData = {};
+        let selectedWords = new Set();
 
         function parseString() {
             const sample = document.getElementById('sampleString').value.trim();
@@ -428,12 +439,14 @@
                 return;
             }
 
-            // Split into tokens (words and special characters)
-            const tokens = sample.match(/[A-Za-z]+|[0-9]+|[:@|\-\/]/g) || [];
+            // Split into tokens (words, numbers, and special characters)
+            // Now includes apostrophes and plus signs within words
+            const tokens = sample.match(/[A-Za-z+']+|[0-9]+|[:@|\-\/]/g) || [];
             
             const wordContainer = document.getElementById('wordContainer');
             wordContainer.innerHTML = '';
             wordData = {};
+            selectedWords.clear();
 
             tokens.forEach((token, index) => {
                 const word = document.createElement('div');
@@ -445,6 +458,7 @@
                 
                 word.addEventListener('dragstart', handleDragStart);
                 word.addEventListener('dragend', handleDragEnd);
+                word.addEventListener('click', handleWordClick);
                 
                 wordContainer.appendChild(word);
                 wordData[index] = { token: token, category: null };
@@ -456,6 +470,30 @@
             
             // Setup drop zones
             setupDropZones();
+        }
+
+        function handleWordClick(e) {
+            const word = e.currentTarget;
+            const index = word.dataset.index;
+            
+            if (e.shiftKey) {
+                // Multi-select with shift
+                if (selectedWords.has(index)) {
+                    selectedWords.delete(index);
+                    word.classList.remove('selected');
+                } else {
+                    selectedWords.add(index);
+                    word.classList.add('selected');
+                }
+            } else {
+                // Single click - clear other selections
+                document.querySelectorAll('.word.selected').forEach(w => {
+                    w.classList.remove('selected');
+                });
+                selectedWords.clear();
+                selectedWords.add(index);
+                word.classList.add('selected');
+            }
         }
 
         function setupDropZones() {
@@ -470,12 +508,63 @@
 
         function handleDragStart(e) {
             draggedElement = e.target;
-            e.target.classList.add('dragging');
+            const index = draggedElement.dataset.index;
+            
+            // If dragging a non-selected item, select only it
+            if (!selectedWords.has(index)) {
+                document.querySelectorAll('.word.selected').forEach(w => {
+                    w.classList.remove('selected');
+                });
+                selectedWords.clear();
+                selectedWords.add(index);
+                draggedElement.classList.add('selected');
+            }
+            
+            // Create custom drag image showing all selected items
+            if (selectedWords.size > 1) {
+                const dragPreview = document.createElement('div');
+                dragPreview.style.position = 'absolute';
+                dragPreview.style.top = '-1000px';
+                dragPreview.style.display = 'flex';
+                dragPreview.style.gap = '8px';
+                dragPreview.style.padding = '8px';
+                dragPreview.style.background = '#3b82f6';
+                dragPreview.style.borderRadius = '6px';
+                dragPreview.style.opacity = '0.9';
+                
+                const sortedIndices = Array.from(selectedWords).sort((a, b) => parseInt(a) - parseInt(b));
+                sortedIndices.forEach(idx => {
+                    const word = document.querySelector(`[data-index="${idx}"]`);
+                    if (word) {
+                        const clone = word.cloneNode(true);
+                        clone.style.background = '#2563eb';
+                        clone.style.color = 'white';
+                        clone.style.margin = '0';
+                        dragPreview.appendChild(clone);
+                    }
+                });
+                
+                document.body.appendChild(dragPreview);
+                e.dataTransfer.setDragImage(dragPreview, 0, 0);
+                
+                // Remove preview after drag starts
+                setTimeout(() => dragPreview.remove(), 0);
+            }
+            
+            // Add dragging class to all selected words
+            selectedWords.forEach(idx => {
+                const word = document.querySelector(`[data-index="${idx}"]`);
+                if (word) word.classList.add('dragging');
+            });
+            
             e.dataTransfer.effectAllowed = 'move';
         }
 
         function handleDragEnd(e) {
-            e.target.classList.remove('dragging');
+            // Remove dragging class from all selected words
+            document.querySelectorAll('.word.dragging').forEach(w => {
+                w.classList.remove('dragging');
+            });
         }
 
         function handleDragOver(e) {
@@ -500,21 +589,32 @@
             const dropZone = e.currentTarget;
             dropZone.classList.remove('drag-over');
             
-            if (draggedElement) {
-                // Remove from previous location
-                if (draggedElement.parentElement.classList.contains('drop-zone')) {
-                    draggedElement.parentElement.classList.remove('has-content');
-                }
-                
-                // Add to new zone
-                dropZone.appendChild(draggedElement);
-                dropZone.classList.add('has-content');
-                draggedElement.classList.add('in-zone');
-                
-                // Update word data
-                const index = draggedElement.dataset.index;
+            if (draggedElement && selectedWords.size > 0) {
                 const category = dropZone.dataset.category;
-                wordData[index].category = category;
+                
+                // Move all selected words to the drop zone
+                const sortedIndices = Array.from(selectedWords).sort((a, b) => parseInt(a) - parseInt(b));
+                
+                sortedIndices.forEach(index => {
+                    const word = document.querySelector(`[data-index="${index}"]`);
+                    if (word) {
+                        // Remove from previous location
+                        if (word.parentElement.classList.contains('drop-zone')) {
+                            word.parentElement.classList.remove('has-content');
+                        }
+                        
+                        // Add to new zone
+                        dropZone.appendChild(word);
+                        word.classList.add('in-zone');
+                        word.classList.remove('selected');
+                        
+                        // Update word data
+                        wordData[index].category = category;
+                    }
+                });
+                
+                dropZone.classList.add('has-content');
+                selectedWords.clear();
             }
             
             return false;
@@ -556,12 +656,12 @@
         }
 
         function buildCompleteTitlePattern(categories, leftoverWords) {
-            let pattern = '';
+            let pattern = '^'; // Start anchor for full title matching
             const sample = document.getElementById('sampleString').value.trim();
 
-            // League
+            // League - escape + properly for RE2
             if (categories.league.length > 0) {
-                pattern += '(?<league>\\w+)';
+                pattern += '(?<league>[A-Za-z0-9\\+]+)';
                 
                 // Find what comes after league in the actual sample
                 const leagueStr = categories.league.join('');
@@ -572,7 +672,7 @@
                 if (afterLeague.startsWith('|')) {
                     pattern += '\\s*\\|\\s*';
                 } else if (afterLeague.startsWith(':')) {
-                    pattern += '\\s*:\\s*';
+                    pattern += '\\s+'; // Space after league when colon follows game
                 } else if (afterLeague.startsWith('-')) {
                     pattern += '\\s*-\\s*';
                 } else {
@@ -591,7 +691,9 @@
                 pattern += '(?<game>\\d+)';
                 
                 // Find what separator comes after the game number
-                const afterGameNum = beforeTeam1.substring(beforeTeam1.indexOf(gameMatch[1]) + gameMatch[1].length).trim();
+                const gameEndIdx = beforeTeam1.indexOf(gameMatch[1]) + gameMatch[1].length;
+                const afterGameNum = beforeTeam1.substring(gameEndIdx).trim();
+                
                 if (afterGameNum.startsWith('-')) {
                     pattern += '\\s*-\\s*';
                 } else if (afterGameNum.startsWith(':')) {
@@ -601,47 +703,74 @@
                 } else {
                     pattern += '\\s+';
                 }
+                
+                // CRITICAL: Always check the FULL sample string for prefix pattern
+                // Count how many colons exist before team1 in the actual sample
+                const beforeTeam1Colons = (beforeTeam1.match(/:/g) || []).length;
+                const afterGameColons = (afterGameNum.match(/:/g) || []).length;
+                
+                // If there are MORE colons in beforeTeam1 than just the game separator colon
+                // then we need the prefix pattern
+                if (afterGameColons > 1 || (afterGameColons === 1 && !afterGameNum.startsWith(':'))) {
+                    // There's additional colon content before team1
+                    const afterSeparator = afterGameNum.replace(/^[:\-|]\s*/, '');
+                    const colonIdx = afterSeparator.indexOf(':');
+                    
+                    if (colonIdx !== -1) {
+                        // Check if it's a time colon or prefix colon
+                        const beforeColon = afterSeparator.substring(0, colonIdx);
+                        const isTimeColon = /\d{1,2}$/.test(beforeColon.trim());
+                        
+                        if (!isTimeColon) {
+                            // It's a prefix - add the optional pattern
+                            pattern += '(?:.*?:\\s*)?';
+                        } else {
+                            // It's a time
+                            pattern += '(?:\\d{1,2}:\\d{2}\\s*(?:AM|PM|am|pm)?\\s+)?';
+                        }
+                    }
+                } else if (/\d+\s*(?:AM|PM|am|pm)/i.test(afterGameNum.replace(/^[:\-|]\s*/, ''))) {
+                    // Just time, no prefix
+                    pattern += '(?:\\d{1,2}(?::\\d{2})?\\s*(?:AM|PM|am|pm)?\\s+)?';
+                }
             }
-
-            // Check if there's time info before team1 and skip it specifically
-            const hasTimeBeforeTeams = /\d+(?::\d+)?(?:am|pm)/i.test(beforeTeam1);
-            if (hasTimeBeforeTeams) {
-                // Match time pattern specifically - case insensitive for AM/PM
-                pattern += '(?:\\d{1,2}(?::\\d{2})?\\s*(?i:AM|PM|am|pm)?\\s+)?';
-            }
-
-            // Team 1 - use robust pattern that works for single and multi-word teams
-            pattern += '(?<team1>.+?)';
 
             // Find separator between teams
             const team2Str = categories.team2.join(' ');
             const team2Idx = sample.indexOf(team2Str);
             const betweenTeams = sample.substring(team1Idx + team1Str.length, team2Idx).trim();
             
-            pattern += '\\s+';
+            let teamSeparatorRegex = '';
             if (betweenTeams.includes('@')) {
-                pattern += '@';
+                teamSeparatorRegex = '@';
             } else if (betweenTeams.toLowerCase().includes('vs')) {
-                pattern += '(?:vs|VS)';
+                teamSeparatorRegex = 'vs|VS';
             } else if (betweenTeams.toLowerCase().includes('at')) {
-                pattern += '(?:at|AT)';
+                teamSeparatorRegex = 'at|AT';
             } else {
-                pattern += '(?:at|vs|@)';
+                teamSeparatorRegex = 'at|vs|@';
             }
-            pattern += '\\s+';
 
-            // Team 2 - capture until end of line or until date/time indicators
-            // Check if there's date/time after team2 in the sample
+            // Team 1 - RE2 compatible: match word chars, spaces, hyphens (more explicit)
+            pattern += '(?<team1>[A-Za-z][A-Za-z\\s]*?)';
+            
+            // Add whitespace and separator
+            pattern += '\\s+(?:' + teamSeparatorRegex + ')\\s+';
+
+            // Team 2 - check if @ follows
             const afterTeam2 = sample.substring(team2Idx + team2Str.length).trim();
             
-            if (afterTeam2.length > 0 && /[@]|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i.test(afterTeam2)) {
-                // There's date content after team2, so use more specific pattern
-                // Match word characters and spaces, but stop at @ or before month names
-                pattern += '(?<team2>[A-Za-z]+(?:\\s+[A-Za-z]+)*)';
+            if (afterTeam2.includes('@')) {
+                // Match letters/spaces (more explicit for RE2)
+                pattern += '(?<team2>[A-Za-z][A-Za-z\\s]*?)';
+                // Then match the @ and everything after
+                pattern += '\\s+@.*';
             } else {
-                // Nothing after team2 or no date indicators, match to end
-                pattern += '(?<team2>.+)';
+                // Match to end - letters and spaces, then any remaining content
+                pattern += '(?<team2>[A-Za-z][A-Za-z\\s]*).*';
             }
+
+            pattern += '$'; // End anchor for full title matching
 
             return pattern;
         }
@@ -682,7 +811,7 @@
 
         function buildTimePattern(timeTokens) {
             if (timeTokens.length === 0) {
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?i:AM|PM|am|pm))?';
+                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?:AM|PM|am|pm))?';
             }
 
             const timeStr = timeTokens.join('');
@@ -691,17 +820,17 @@
             if (/\d+:\d+/.test(timeStr)) {
                 // Has colon
                 if (/[ap]m/i.test(timeStr)) {
-                    return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?i:AM|PM|am|pm))';
+                    return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?:AM|PM|am|pm))';
                 } else {
                     // 24-hour format
                     return '(?<hour>\\d{1,2}):(?<minute>\\d{2})';
                 }
             } else if (/\d+[ap]m/i.test(timeStr)) {
                 // Just hour with am/pm, no colon
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?i:AM|PM|am|pm))';
+                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?:AM|PM|am|pm))';
             } else {
                 // Default flexible pattern
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?i:AM|PM|am|pm))?';
+                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?:AM|PM|am|pm))?';
             }
         }
 
