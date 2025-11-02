@@ -309,9 +309,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚽ Sports Game Regex Generator</h1>
+            <h1>🏈 Sports Game Regex Generator</h1>
             <p>Drag and drop words to build your regex patterns</p>
-            <p class="version">version-11012025.1830</p>
+            <p class="version">version-11012025.2015</p>
         </div>
 
         <!-- Instructions -->
@@ -530,9 +530,13 @@
                 date: []
             };
 
+            const leftoverWords = [];
+
             Object.values(wordData).forEach(item => {
                 if (item.category) {
                     categories[item.category].push(item.token);
+                } else {
+                    leftoverWords.push(item.token);
                 }
             });
 
@@ -543,7 +547,7 @@
             }
 
             // Generate individual component patterns
-            const titlePattern = buildCompleteTitlePattern(categories);
+            const titlePattern = buildCompleteTitlePattern(categories, leftoverWords);
             const timePattern = buildTimePattern(categories.time);
             const datePattern = buildDatePattern(categories.date);
 
@@ -551,123 +555,134 @@
             displayResults(titlePattern, timePattern, datePattern, categories);
         }
 
-        function buildCompleteTitlePattern(categories) {
+        function buildCompleteTitlePattern(categories, leftoverWords) {
             let pattern = '';
             const sample = document.getElementById('sampleString').value.trim();
 
             // League
             if (categories.league.length > 0) {
                 pattern += '(?<league>\\w+)';
+                
+                // Find what comes after league in the actual sample
+                const leagueStr = categories.league.join('');
+                const leagueIdx = sample.indexOf(leagueStr);
+                const afterLeague = sample.substring(leagueIdx + leagueStr.length).trim();
+                
+                // Check first character(s) after league
+                if (afterLeague.startsWith('|')) {
+                    pattern += '\\s*\\|\\s*';
+                } else if (afterLeague.startsWith(':')) {
+                    pattern += '\\s*:\\s*';
+                } else if (afterLeague.startsWith('-')) {
+                    pattern += '\\s*-\\s*';
+                } else {
+                    pattern += '\\s+';
+                }
             }
 
-            // Analyze what comes between league and team1
-            const leagueEnd = categories.league.join('');
-            const team1Start = categories.team1[0];
-            const between = sample.substring(
-                sample.indexOf(leagueEnd) + leagueEnd.length,
-                sample.indexOf(team1Start)
-            );
-
-            // Check for game number
-            if (/\d+/.test(between)) {
-                pattern += '\\s+(?<game>\\d+)';
+            // Check for game number (any digits in leftovers before team1)
+            const team1Str = categories.team1.join(' ');
+            const team1Idx = sample.indexOf(team1Str);
+            const beforeTeam1 = sample.substring(0, team1Idx);
+            
+            // Look for isolated digits (game number)
+            const gameMatch = beforeTeam1.match(/\s(\d+)\s/);
+            if (gameMatch) {
+                pattern += '(?<game>\\d+)';
+                
+                // Find what separator comes after the game number
+                const afterGameNum = beforeTeam1.substring(beforeTeam1.indexOf(gameMatch[1]) + gameMatch[1].length).trim();
+                if (afterGameNum.startsWith('-')) {
+                    pattern += '\\s*-\\s*';
+                } else if (afterGameNum.startsWith(':')) {
+                    pattern += '\\s*:\\s*';
+                } else if (afterGameNum.startsWith('|')) {
+                    pattern += '\\s*\\|\\s*';
+                } else {
+                    pattern += '\\s+';
+                }
             }
 
-            // Check for separators (: | -)
-            if (between.includes(':')) {
-                pattern += '\\s*:\\s*';
-            } else if (between.includes('|')) {
-                pattern += '\\s*\\|\\s*';
-            } else if (between.includes('-')) {
-                pattern += '\\s*-\\s*';
-            } else {
-                pattern += '\\s+';
+            // Check if there's time info before team1 and skip it specifically
+            const hasTimeBeforeTeams = /\d+(?::\d+)?(?:am|pm)/i.test(beforeTeam1);
+            if (hasTimeBeforeTeams) {
+                // Match time pattern specifically - case insensitive for AM/PM
+                pattern += '(?:\\d{1,2}(?::\\d{2})?\\s*(?i:AM|PM|am|pm)?\\s+)?';
             }
 
-            // Team 1 - use flexible pattern
-            const team1Words = categories.team1.length;
-            if (team1Words > 1) {
-                pattern += '(?<team1>.*?)';
-            } else {
-                pattern += '(?<team1>\\w+)';
-            }
+            // Team 1 - use robust pattern that works for single and multi-word teams
+            pattern += '(?<team1>.+?)';
 
-            // Separator between teams
-            const team1End = categories.team1.join(' ');
-            const team2Start = categories.team2[0];
-            const teamSep = sample.substring(
-                sample.indexOf(team1End) + team1End.length,
-                sample.indexOf(team2Start)
-            ).trim();
-
+            // Find separator between teams
+            const team2Str = categories.team2.join(' ');
+            const team2Idx = sample.indexOf(team2Str);
+            const betweenTeams = sample.substring(team1Idx + team1Str.length, team2Idx).trim();
+            
             pattern += '\\s+';
-            if (teamSep.toLowerCase().includes('vs')) {
-                pattern += '(?:vs|VS)';
-            } else if (teamSep.includes('@')) {
+            if (betweenTeams.includes('@')) {
                 pattern += '@';
-            } else if (teamSep.toLowerCase().includes('at')) {
+            } else if (betweenTeams.toLowerCase().includes('vs')) {
+                pattern += '(?:vs|VS)';
+            } else if (betweenTeams.toLowerCase().includes('at')) {
                 pattern += '(?:at|AT)';
             } else {
                 pattern += '(?:at|vs|@)';
             }
             pattern += '\\s+';
 
-            // Team 2 - use flexible pattern
-            const team2Words = categories.team2.length;
-            if (team2Words > 1) {
-                pattern += '(?<team2>.*?)';
+            // Team 2 - capture until end of line or until date/time indicators
+            // Check if there's date/time after team2 in the sample
+            const afterTeam2 = sample.substring(team2Idx + team2Str.length).trim();
+            
+            if (afterTeam2.length > 0 && /[@]|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i.test(afterTeam2)) {
+                // There's date content after team2, so use more specific pattern
+                // Match word characters and spaces, but stop at @ or before month names
+                pattern += '(?<team2>[A-Za-z]+(?:\\s+[A-Za-z]+)*)';
             } else {
-                pattern += '(?<team2>\\w+)';
-            }
-
-            // Add date pattern if date is present
-            if (categories.date.length > 0) {
-                const dateStr = categories.date.join(' ');
-                
-                // Check what separator comes before date
-                const team2End = categories.team2.join(' ');
-                const dateStart = categories.date[0];
-                const beforeDate = sample.substring(
-                    sample.indexOf(team2End) + team2End.length,
-                    sample.indexOf(dateStart)
-                ).trim();
-                
-                if (beforeDate.includes('@')) {
-                    pattern += '\\s+@\\s+';
-                } else {
-                    pattern += '\\s+';
-                }
-                
-                // Month and day
-                if (/[A-Za-z]+/.test(dateStr)) {
-                    pattern += '(?<month>[A-Za-z]+)\\s+(?<day>\\d{1,2})';
-                } else {
-                    pattern += '(?<day>\\d{1,2})';
-                }
-            }
-
-            // Add time pattern if time is present
-            if (categories.time.length > 0) {
-                const timeStr = categories.time.join('');
-                pattern += '\\s+';
-                
-                if (/\d+:\d+/.test(timeStr)) {
-                    pattern += '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?';
-                } else {
-                    pattern += '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?';
-                }
-                
-                if (/[ap]m/i.test(timeStr)) {
-                    pattern += '\\s*(?<ampm>[APMapm]{2})';
-                }
+                // Nothing after team2 or no date indicators, match to end
+                pattern += '(?<team2>.+)';
             }
 
             return pattern;
         }
 
+        function findSeparatorAfter(sample, searchStr, leftoverWords) {
+            const idx = sample.indexOf(searchStr);
+            if (idx === -1) return null;
+            
+            const afterStr = sample.substring(idx + searchStr.length).trim();
+            
+            // Check for specific separators in leftover words
+            if (leftoverWords.includes(':') || afterStr.startsWith(':')) {
+                return '\\s*:\\s*';
+            } else if (leftoverWords.includes('|') || afterStr.startsWith('|')) {
+                return '\\s*\\|\\s*';
+            } else if (leftoverWords.includes('-') || afterStr.startsWith('-')) {
+                return '\\s*-\\s*';
+            }
+            
+            return '\\s+';
+        }
+
+        function findTeamSeparator(leftoverWords) {
+            // Check leftover words for team separators
+            const leftoverStr = leftoverWords.join('').toLowerCase();
+            
+            if (leftoverWords.includes('@')) {
+                return '@';
+            } else if (leftoverStr.includes('vs')) {
+                return '(?:vs|VS)';
+            } else if (leftoverStr.includes('at')) {
+                return '(?:at|AT)';
+            }
+            
+            // Default - support all
+            return '(?:at|vs|@)';
+        }
+
         function buildTimePattern(timeTokens) {
             if (timeTokens.length === 0) {
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>[APMapm]{2})?';
+                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?i:AM|PM|am|pm))?';
             }
 
             const timeStr = timeTokens.join('');
@@ -676,17 +691,17 @@
             if (/\d+:\d+/.test(timeStr)) {
                 // Has colon
                 if (/[ap]m/i.test(timeStr)) {
-                    return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>[APMapm]{2})';
+                    return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?i:AM|PM|am|pm))';
                 } else {
                     // 24-hour format
                     return '(?<hour>\\d{1,2}):(?<minute>\\d{2})';
                 }
             } else if (/\d+[ap]m/i.test(timeStr)) {
                 // Just hour with am/pm, no colon
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>[APMapm]{2})';
+                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?i:AM|PM|am|pm))';
             } else {
                 // Default flexible pattern
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>[APMapm]{2})?';
+                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?i:AM|PM|am|pm))?';
             }
         }
 
@@ -696,18 +711,31 @@
             }
 
             const dateStr = dateTokens.join(' ');
+            const sample = document.getElementById('sampleString').value.trim();
+
+            // Check if date comes after @ symbol
+            const hasAtBeforeDate = sample.includes('@') && sample.indexOf('@') < sample.indexOf(dateTokens[0]);
+
+            let pattern = '';
+
+            // If @ symbol precedes date, anchor to it
+            if (hasAtBeforeDate) {
+                pattern += '@\\s+';
+            }
 
             // Check if it has month name
             if (/[A-Za-z]+/.test(dateStr)) {
-                // Month name format
-                return '(?<month>[A-Za-z]+)\\s+(?<day>\\d{1,2})(?:\\s+(?<year>\\d{4}))?';
+                // Month name format - only match actual month names
+                pattern += '(?<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\\s+(?<day>\\d{1,2})(?:\\s+(?<year>\\d{4}))?';
             } else if (dateStr.includes('/')) {
                 // Slash format
-                return '(?<month>\\d{1,2})/(?<day>\\d{1,2})(?:/(?<year>\\d{2,4}))?';
+                pattern += '(?<month>\\d{1,2})/(?<day>\\d{1,2})(?:/(?<year>\\d{2,4}))?';
             } else {
-                // Just day number
-                return '(?<day>\\d{1,2})';
+                // Just day number (game number context)
+                pattern += '(?<day>\\d{1,2})';
             }
+
+            return pattern;
         }
 
         function escapeRegex(str) {
