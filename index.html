@@ -320,7 +320,7 @@
         <div class="header">
             <h1>🏈 Sports Game Regex Generator</h1>
             <p>Drag and drop words to build your regex patterns</p>
-            <p class="version">version-11012025.2140</p>
+            <p class="version">version-11012025.2185 - Complete Pattern Rebuild</p>
         </div>
 
         <!-- Instructions -->
@@ -876,35 +876,169 @@
             document.getElementById('timeOutput').textContent = timePattern;
             document.getElementById('dateOutput').textContent = datePattern;
 
-            // Test the patterns
+            // Test the patterns ACTUALLY against the sample string
             const sample = document.getElementById('sampleString').value.trim();
             const testResults = document.getElementById('testResults');
             
-            let html = '<div class="alert alert-success">✓ Patterns generated successfully!</div>';
+            // Try to match the patterns
+            let titleMatch = null;
+            let timeMatch = null;
+            let dateMatch = null;
+            let hasErrors = false;
+            let errorMessages = [];
+            let warnings = [];
+            
+            try {
+                const titleRegex = new RegExp(titlePattern);
+                titleMatch = sample.match(titleRegex);
+                if (!titleMatch) {
+                    hasErrors = true;
+                    errorMessages.push('⚠️ Title pattern did not match the sample title');
+                }
+            } catch (e) {
+                hasErrors = true;
+                errorMessages.push('❌ Title pattern error: ' + e.message);
+            }
+            
+            if (timePattern) {
+                try {
+                    const timeRegex = new RegExp(timePattern);
+                    timeMatch = sample.match(timeRegex);
+                    if (!timeMatch) {
+                        errorMessages.push('⚠️ Time pattern did not match');
+                    }
+                } catch (e) {
+                    errorMessages.push('❌ Time pattern error: ' + e.message);
+                }
+            }
+            
+            if (datePattern) {
+                try {
+                    const dateRegex = new RegExp(datePattern);
+                    dateMatch = sample.match(dateRegex);
+                    if (!dateMatch) {
+                        errorMessages.push('⚠️ Date pattern did not match');
+                    }
+                } catch (e) {
+                    errorMessages.push('❌ Date pattern error: ' + e.message);
+                }
+            }
+            
+            // Check if extracted values match what user dragged
+            let needsRefinement = false;
+            if (titleMatch && titleMatch.groups) {
+                const expectedTeam1 = categories.team1.join(' ').trim();
+                const extractedTeam1 = (titleMatch.groups.team1 || '').trim();
+                const expectedTeam2 = categories.team2.join(' ').trim();
+                const extractedTeam2 = (titleMatch.groups.team2 || '').trim();
+                
+                if (expectedTeam1 && extractedTeam1 !== expectedTeam1) {
+                    warnings.push(`⚠️ Team 1 mismatch: Expected "${expectedTeam1}" but got "${extractedTeam1}"`);
+                    needsRefinement = true;
+                }
+                
+                if (expectedTeam2 && extractedTeam2 !== expectedTeam2) {
+                    warnings.push(`⚠️ Team 2 mismatch: Expected "${expectedTeam2}" but got "${extractedTeam2}"`);
+                    needsRefinement = true;
+                }
+            }
+            
+            let html = '';
+            
+            if (hasErrors) {
+                html += '<div class="alert alert-error">';
+                errorMessages.forEach(msg => {
+                    html += msg + '<br>';
+                });
+                html += '</div>';
+            } else if (needsRefinement) {
+                html += '<div class="alert alert-error">';
+                html += '⚠️ Pattern extracted different values than expected<br>';
+                warnings.forEach(msg => {
+                    html += msg + '<br>';
+                });
+                html += '<button onclick="attemptRefinement()" style="margin-top: 10px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">🔧 Auto-Fix Pattern</button>';
+                html += '</div>';
+            } else {
+                html += '<div class="alert alert-success">✓ All patterns matched successfully!</div>';
+            }
+            
             html += '<div style="background: #1f2937; padding: 20px; border-radius: 6px;">';
-            html += '<h4 style="color: #10b981; margin-bottom: 15px;">Extracted Data Preview:</h4>';
+            html += '<h4 style="color: #10b981; margin-bottom: 15px;">Extracted Data Preview (Actual Regex Results):</h4>';
             
+            // League
             html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-            html += '<strong>League:</strong> ' + (categories.league.join(' ') || 'Not specified');
+            if (titleMatch && titleMatch.groups && titleMatch.groups.league) {
+                html += '<strong>League:</strong> <span style="color: #10b981;">' + titleMatch.groups.league + '</span>';
+            } else {
+                html += '<strong>League:</strong> <span style="color: #ef4444;">Not captured</span>';
+            }
             html += '</div>';
             
-            html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-            html += '<strong>Team 1:</strong> ' + categories.team1.join(' ');
-            html += '</div>';
-            
-            html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-            html += '<strong>Team 2:</strong> ' + categories.team2.join(' ');
-            html += '</div>';
-            
-            if (categories.time.length > 0) {
+            // Game number
+            if (titleMatch && titleMatch.groups && titleMatch.groups.game) {
                 html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-                html += '<strong>Time:</strong> ' + categories.time.join('');
+                html += '<strong>Game:</strong> <span style="color: #10b981;">' + titleMatch.groups.game + '</span>';
                 html += '</div>';
             }
             
-            if (categories.date.length > 0) {
+            // Team 1
+            html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
+            if (titleMatch && titleMatch.groups && titleMatch.groups.team1) {
+                const extractedTeam1 = titleMatch.groups.team1.trim();
+                const expectedTeam1 = categories.team1.join(' ').trim();
+                const isCorrect = extractedTeam1 === expectedTeam1;
+                html += '<strong>Team 1:</strong> <span style="color: ' + (isCorrect ? '#10b981' : '#ef4444') + ';">' + extractedTeam1 + '</span>';
+                if (!isCorrect && expectedTeam1) {
+                    html += ' <span style="color: #9ca3af; font-size: 12px;">(Expected: ' + expectedTeam1 + ')</span>';
+                }
+            } else {
+                html += '<strong>Team 1:</strong> <span style="color: #ef4444;">Not captured</span>';
+            }
+            html += '</div>';
+            
+            // Team 2
+            html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
+            if (titleMatch && titleMatch.groups && titleMatch.groups.team2) {
+                const extractedTeam2 = titleMatch.groups.team2.trim();
+                const expectedTeam2 = categories.team2.join(' ').trim();
+                const isCorrect = extractedTeam2 === expectedTeam2;
+                html += '<strong>Team 2:</strong> <span style="color: ' + (isCorrect ? '#10b981' : '#ef4444') + ';">' + extractedTeam2 + '</span>';
+                if (!isCorrect && expectedTeam2) {
+                    html += ' <span style="color: #9ca3af; font-size: 12px;">(Expected: ' + expectedTeam2 + ')</span>';
+                }
+            } else {
+                html += '<strong>Team 2:</strong> <span style="color: #ef4444;">Not captured</span>';
+            }
+            html += '</div>';
+            
+            // Time
+            if (timePattern) {
                 html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-                html += '<strong>Date:</strong> ' + categories.date.join(' ');
+                if (timeMatch && timeMatch.groups) {
+                    let timeStr = '';
+                    if (timeMatch.groups.hour) timeStr += timeMatch.groups.hour;
+                    if (timeMatch.groups.minute) timeStr += ':' + timeMatch.groups.minute;
+                    if (timeMatch.groups.ampm) timeStr += ' ' + timeMatch.groups.ampm;
+                    html += '<strong>Time:</strong> <span style="color: #10b981;">' + (timeStr || 'Matched but no capture groups') + '</span>';
+                } else {
+                    html += '<strong>Time:</strong> <span style="color: #ef4444;">Not captured</span>';
+                }
+                html += '</div>';
+            }
+            
+            // Date
+            if (datePattern) {
+                html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
+                if (dateMatch && dateMatch.groups) {
+                    let dateStr = '';
+                    if (dateMatch.groups.month) dateStr += dateMatch.groups.month + ' ';
+                    if (dateMatch.groups.day) dateStr += dateMatch.groups.day;
+                    if (dateMatch.groups.year) dateStr += ', ' + dateMatch.groups.year;
+                    html += '<strong>Date:</strong> <span style="color: #10b981;">' + (dateStr.trim() || 'Matched but no capture groups') + '</span>';
+                } else {
+                    html += '<strong>Date:</strong> <span style="color: #ef4444;">Not captured</span>';
+                }
                 html += '</div>';
             }
             
@@ -915,6 +1049,191 @@
             
             // Scroll to results
             document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function attemptRefinement() {
+            showAlert('🤖 Rebuilding entire pattern from scratch...', 'success');
+            
+            // Get current categories
+            const categories = {
+                league: [],
+                team1: [],
+                team2: [],
+                time: [],
+                date: []
+            };
+
+            Object.values(wordData).forEach(item => {
+                if (item.category) {
+                    categories[item.category].push(item.token);
+                }
+            });
+            
+            const sample = document.getElementById('sampleString').value.trim();
+            const expectedTeam1 = categories.team1.join(' ').trim();
+            const expectedTeam2 = categories.team2.join(' ').trim();
+            
+            console.log('Sample:', sample);
+            console.log('Expected Team1:', expectedTeam1);
+            console.log('Expected Team2:', expectedTeam2);
+            
+            try {
+                // Find exact positions of each element in the sample
+                const leagueStr = categories.league.join(' ');
+                const leagueIdx = leagueStr ? sample.indexOf(leagueStr) : -1;
+                
+                const team1Idx = sample.indexOf(expectedTeam1);
+                const team2Idx = sample.indexOf(expectedTeam2);
+                
+                if (team1Idx === -1 || team2Idx === -1) {
+                    showAlert('❌ Could not find teams in sample', 'error');
+                    return;
+                }
+                
+                // Build pattern piece by piece based on actual sample structure
+                let newPattern = '^';
+                let currentIdx = 0;
+                
+                // LEAGUE
+                if (leagueIdx !== -1 && leagueIdx === 0) {
+                    newPattern += '(?<league>[A-Za-z0-9\\+]+)';
+                    currentIdx = leagueStr.length;
+                    
+                    // What's between league and next element?
+                    const afterLeague = sample.substring(currentIdx).trim();
+                    if (afterLeague.startsWith('|')) {
+                        newPattern += '\\s*\\|\\s*';
+                    } else if (afterLeague.startsWith(':')) {
+                        newPattern += '\\s*:\\s*';
+                    } else {
+                        newPattern += '\\s+';
+                    }
+                }
+                
+                // GAME NUMBER
+                const gameMatch = sample.match(/(\d+)/);
+                if (gameMatch) {
+                    const gameNum = gameMatch[1];
+                    const gameIdx = sample.indexOf(gameNum);
+                    
+                    newPattern += '(?<game>\\d+)';
+                    
+                    // What's between game number and team1?
+                    const betweenGameAndTeam1 = sample.substring(gameIdx + gameNum.length, team1Idx);
+                    console.log('Between game and team1:', betweenGameAndTeam1);
+                    
+                    // Check for separator characters
+                    if (betweenGameAndTeam1.includes('-')) {
+                        newPattern += '\\s*-\\s*';
+                    } else if (betweenGameAndTeam1.includes('|')) {
+                        newPattern += '\\s*\\|\\s*';
+                    } else if (betweenGameAndTeam1.includes(':')) {
+                        newPattern += '\\s*:\\s*';
+                    } else {
+                        newPattern += '\\s+';
+                    }
+                    
+                    // Check if there's time/other content before team1
+                    const trimmed = betweenGameAndTeam1.replace(/[\s\-:|]/g, '').trim();
+                    if (trimmed.length > 0) {
+                        // There's content (like "3pm") between game and team1
+                        // Match it loosely
+                        newPattern += '.*?\\s+';
+                        showAlert('✓ Found content between game and team1: "' + trimmed + '"', 'success');
+                    }
+                }
+                
+                // TEAM 1
+                const team1Words = expectedTeam1.split(/\s+/).length;
+                if (team1Words === 1) {
+                    newPattern += '(?<team1>[A-Za-z]+)';
+                } else if (team1Words === 2) {
+                    newPattern += '(?<team1>[A-Za-z]+\\s+[A-Za-z]+)';
+                } else {
+                    newPattern += '(?<team1>[A-Za-z]+(?:\\s+[A-Za-z]+){' + (team1Words - 1) + '})';
+                }
+                
+                // SEPARATOR (vs/at/@)
+                const betweenTeams = sample.substring(team1Idx + expectedTeam1.length, team2Idx);
+                console.log('Between teams:', betweenTeams);
+                
+                if (betweenTeams.toLowerCase().includes('vs')) {
+                    newPattern += '\\s+(?:vs|VS)\\s+';
+                } else if (betweenTeams.toLowerCase().includes('at')) {
+                    newPattern += '\\s+(?:at|AT)\\s+';
+                } else if (betweenTeams.includes('@')) {
+                    newPattern += '\\s+@\\s+';
+                } else {
+                    newPattern += '\\s+(?:vs|VS|at|AT|@)\\s+';
+                }
+                
+                // TEAM 2 - THE CRITICAL PART
+                const team2Words = expectedTeam2.split(/\s+/).length;
+                showAlert('📊 Team 2 has ' + team2Words + ' word(s)', 'success');
+                
+                if (team2Words === 1) {
+                    newPattern += '(?<team2>[A-Za-z]+)';
+                } else if (team2Words === 2) {
+                    newPattern += '(?<team2>[A-Za-z]+\\s+[A-Za-z]+)';
+                } else if (team2Words === 3) {
+                    newPattern += '(?<team2>[A-Za-z]+\\s+[A-Za-z]+\\s+[A-Za-z]+)';
+                } else {
+                    newPattern += '(?<team2>[A-Za-z]+(?:\\s+[A-Za-z]+){' + (team2Words - 1) + '})';
+                }
+                
+                // AFTER TEAM 2
+                const afterTeam2 = sample.substring(team2Idx + expectedTeam2.length);
+                console.log('After team2:', afterTeam2);
+                
+                if (afterTeam2.trim().startsWith('@')) {
+                    newPattern += '\\s+@.*$';
+                } else if (categories.date.length > 0 || categories.time.length > 0) {
+                    // Date or time exists - match rest loosely
+                    newPattern += '(?:\\s+.*)?$';
+                } else {
+                    newPattern += '$';
+                }
+                
+                showAlert('🧪 Testing new pattern...', 'success');
+                console.log('Generated pattern:', newPattern);
+                
+                // Test the new pattern
+                const testRegex = new RegExp(newPattern);
+                const testMatch = sample.match(testRegex);
+                
+                if (testMatch && testMatch.groups) {
+                    const fixedTeam1 = (testMatch.groups.team1 || '').trim();
+                    const fixedTeam2 = (testMatch.groups.team2 || '').trim();
+                    
+                    console.log('Match successful!');
+                    console.log('Team1 extracted:', fixedTeam1);
+                    console.log('Team2 extracted:', fixedTeam2);
+                    
+                    showAlert('📊 Team 1: "' + fixedTeam1 + '" ' + (fixedTeam1 === expectedTeam1 ? '✓' : '✗'), fixedTeam1 === expectedTeam1 ? 'success' : 'error');
+                    showAlert('📊 Team 2: "' + fixedTeam2 + '" ' + (fixedTeam2 === expectedTeam2 ? '✓' : '✗'), fixedTeam2 === expectedTeam2 ? 'success' : 'error');
+                    
+                    if (fixedTeam1 === expectedTeam1 && fixedTeam2 === expectedTeam2) {
+                        showAlert('🎉 Pattern fixed successfully!', 'success');
+                        document.getElementById('titleOutput').textContent = newPattern;
+                        
+                        // Update display
+                        setTimeout(() => {
+                            const currentTimePattern = document.getElementById('timeOutput').textContent;
+                            const currentDatePattern = document.getElementById('dateOutput').textContent;
+                            displayResults(newPattern, currentTimePattern, currentDatePattern, categories);
+                        }, 1500);
+                    }
+                } else {
+                    showAlert('❌ Pattern does not match sample', 'error');
+                    console.log('Pattern failed to match');
+                    console.log('Pattern:', newPattern);
+                    console.log('Sample:', sample);
+                }
+                
+            } catch (e) {
+                showAlert('❌ Error: ' + e.message, 'error');
+                console.error('Auto-fix error:', e);
+            }
         }
 
         function copyToClipboard(elementId) {
