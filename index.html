@@ -320,7 +320,7 @@
         <div class="header">
             <h1>🏈 Sports Game Regex Generator</h1>
             <p>Drag and drop words to build your regex patterns</p>
-            <p class="version">version-11012025.2185 - Complete Pattern Rebuild</p>
+            <p class="version">version-11012025.2190 - Automatic Pattern Fixing</p>
         </div>
 
         <!-- Instructions -->
@@ -950,7 +950,15 @@
                 errorMessages.forEach(msg => {
                     html += msg + '<br>';
                 });
+                html += '<button onclick="attemptRefinement()" style="margin-top: 10px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">🔧 Auto-Fix Pattern</button>';
                 html += '</div>';
+                
+                // AUTOMATICALLY trigger auto-fix after displaying the error
+                setTimeout(() => {
+                    showAlert('🤖 Automatically attempting to fix pattern...', 'success');
+                    attemptRefinement();
+                }, 1500);
+                
             } else if (needsRefinement) {
                 html += '<div class="alert alert-error">';
                 html += '⚠️ Pattern extracted different values than expected<br>';
@@ -959,6 +967,13 @@
                 });
                 html += '<button onclick="attemptRefinement()" style="margin-top: 10px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">🔧 Auto-Fix Pattern</button>';
                 html += '</div>';
+                
+                // AUTOMATICALLY trigger auto-fix after displaying the warning
+                setTimeout(() => {
+                    showAlert('🤖 Automatically attempting to fix pattern...', 'success');
+                    attemptRefinement();
+                }, 1500);
+                
             } else {
                 html += '<div class="alert alert-success">✓ All patterns matched successfully!</div>';
             }
