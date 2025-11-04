@@ -258,8 +258,8 @@
     <div class="container">
         <div class="header">
             <h1>🏈 Sports Regex Generator</h1>
-            <p>Universal pattern generator</p>
-            <p style="font-size: 12px; margin-top: 8px; opacity: 0.5;">version-11012025.7100 - Syntax Fixed</p>
+            <p>Drag and drop words to build regex patterns</p>
+            <p style="font-size: 12px; margin-top: 8px; opacity: 0.5;">version-11012025.7200</p>
         </div>
 
         <div class="section">
@@ -357,8 +357,8 @@
             }
 
             // IMPROVED SPLIT: Include apostrophes, periods, and more separators
-            // Split on: spaces, |, :, @, (, ), #, -, ', .
-            words = sample.split(/(\s+|[|:@()#.'-])/);
+            // Split on: spaces, |, :, @, (, ), #, -, but NOT periods (keep them with words for "St. Louis")
+            words = sample.split(/(\s+|[|:@()#-])/);
             wordData = {};
             selectedWords.clear();
             
@@ -626,7 +626,22 @@
                     i = capture.endIdx + 1;
                 } else {
                     if (words[i] !== undefined && words[i].length > 0) {
-                        pattern += escapeRegex(words[i]);
+                        const escapedWord = escapeRegex(words[i]);
+                        
+                        // Generalize standalone numbers (not in time/date) to \d+
+                        if (/^\d+$/.test(words[i])) {
+                            const isInTimeDate = ['time', 'date'].some(cat => 
+                                categories[cat].some(item => item.index === i)
+                            );
+                            
+                            if (!isInTimeDate) {
+                                pattern += '\\d+';
+                            } else {
+                                pattern += escapedWord;
+                            }
+                        } else {
+                            pattern += escapedWord;
+                        }
                     }
                     i++;
                 }
@@ -689,25 +704,25 @@
             if (type === 'league') {
                 if (/^[A-Z]+$/.test(text)) return '[A-Z]+';
                 if (/^[A-Z]+\+$/.test(text)) return '[A-Z]+\\+';
-                return "[A-Za-z0-9+']+(?:\\s+[A-Za-z0-9+']+)*";
+                return "[A-Za-z0-9+'.]+(?:\\s+[A-Za-z0-9+'.]+)*";
             }
             
             if (type === 'team1' || type === 'team2') {
                 if (/\([A-Z]+\)/.test(text)) {
-                    return '[A-Za-z]+\\s*\\([A-Z]+\\)';
+                    return '[A-Za-z.]+\\s*\\([A-Z]+\\)';
                 }
                 
                 const wordParts = text.split(/\s+/).filter(w => w.length > 0);
                 const wordCount = wordParts.length;
                 
                 if (wordCount === 1) {
-                    return "[A-Za-z']+";
+                    return "[A-Za-z'.]+";
                 } else if (wordCount === 2) {
-                    return "[A-Za-z']+\\s+[A-Za-z']+";
+                    return "[A-Za-z'.]+\\s+[A-Za-z'.]+";
                 } else if (wordCount === 3) {
-                    return "[A-Za-z']+\\s+[A-Za-z']+\\s+[A-Za-z']+";
+                    return "[A-Za-z'.]+\\s+[A-Za-z'.]+\\s+[A-Za-z'.]+";
                 } else {
-                    return "[A-Za-z']+(?:\\s+[A-Za-z']+){" + (wordCount - 1) + '}';
+                    return "[A-Za-z'.]+(?:\\s+[A-Za-z'.]+){" + (wordCount - 1) + '}';
                 }
             }
             
