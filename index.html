@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sports Game Regex Generator</title>
+    <title>Sports Regex Generator - Final</title>
     <style>
         * {
             margin: 0;
@@ -38,17 +38,6 @@
             color: #f3f4f6;
         }
 
-        .header p {
-            opacity: 0.7;
-            font-size: 14px;
-        }
-
-        .version {
-            opacity: 0.5;
-            font-size: 12px;
-            margin-top: 8px;
-        }
-
         .section {
             background: #242830;
             padding: 25px;
@@ -56,70 +45,47 @@
             margin-bottom: 20px;
         }
 
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #f3f4f6;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #374151;
+        .section h3 {
+            margin-bottom: 15px;
+            color: #10b981;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            color: #9ca3af;
-            margin-bottom: 8px;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        input[type="text"] {
+        textarea {
             width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #374151;
-            border-radius: 6px;
-            font-size: 16px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            background: #1a1d23;
-            color: #e4e6eb;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #10b981;
+            padding: 12px;
             background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            color: #e4e6eb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 15px;
+            min-height: 80px;
+            resize: vertical;
         }
 
-        .word-container {
+        .words-container {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            padding: 20px;
-            background: #1a1d23;
-            border-radius: 6px;
-            min-height: 80px;
-            border: 2px dashed #374151;
+            padding: 15px;
+            background: #1f2937;
+            border-radius: 4px;
+            min-height: 60px;
+            margin: 10px 0;
         }
 
         .word {
             padding: 8px 12px;
             background: #374151;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: move;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 14px;
             transition: all 0.2s;
-            border: 2px solid transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
         }
 
         .word:hover {
@@ -128,107 +94,115 @@
         }
 
         .word.selected {
-            background: #3b82f6;
-            border-color: #2563eb;
+            background: #10b981;
             color: white;
+            box-shadow: 0 0 0 2px #10b981;
         }
 
-        .word.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
+        .drag-preview {
+            position: fixed;
+            top: -1000px;
+            left: -1000px;
+            background: #10b981;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            font-weight: 500;
         }
 
         .drop-zone {
-            min-height: 60px;
             padding: 15px;
             background: #1f2937;
-            border-radius: 6px;
-            border: 2px dashed #374151;
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
+            border: 2px dashed #10b981;
+            border-radius: 4px;
+            min-height: 60px;
+            margin: 10px 0;
+            transition: all 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         .drop-zone.drag-over {
             border-color: #10b981;
-            background: #064e3b;
+            background: #10b98120;
         }
 
-        .drop-zone-label {
-            font-size: 12px;
-            color: #6b7280;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .drop-zone.has-content {
-            border-style: solid;
-            border-color: #10b981;
-        }
-
-        .word.in-zone {
+        .dropped-word {
+            display: inline-block;
+            padding: 6px 10px;
+            margin: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 13px;
+            position: relative;
+            padding-right: 25px;
             background: #10b981;
             color: white;
-            border-color: #059669;
         }
 
-        .word.in-zone:hover {
-            background: #059669;
+        .dropped-word .remove-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        button {
+        .dropped-word .remove-btn:hover {
+            background: rgba(0,0,0,0.6);
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .btn {
             padding: 12px 24px;
             border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: #10b981;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
             color: white;
+            background: #10b981;
         }
 
-        .btn-primary:hover {
+        .btn:hover {
             background: #059669;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-secondary {
-            background: #374151;
-            color: #e4e6eb;
-        }
-
-        .btn-secondary:hover {
-            background: #4b5563;
         }
 
         .output-box {
-            background: #1a1d23;
-            border: 1px solid #374151;
-            border-radius: 6px;
-            padding: 16px;
-            padding-right: 80px;
-            font-family: 'Monaco', 'Courier New', monospace;
+            background: #1f2937;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
             font-size: 13px;
-            color: #10b981;
             word-break: break-all;
             position: relative;
-            min-height: 60px;
         }
 
-        .copy-button {
+        .copy-btn {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 10px;
+            right: 10px;
             padding: 6px 12px;
             background: #374151;
             border: none;
@@ -236,344 +210,258 @@
             color: #e4e6eb;
             cursor: pointer;
             font-size: 12px;
-            transition: all 0.2s;
         }
 
-        .copy-button:hover {
+        .copy-btn:hover {
             background: #4b5563;
         }
 
-        .pattern-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-        }
-
-        .pattern-card {
-            background: #1f2937;
-            padding: 20px;
-            border-radius: 6px;
-            border-left: 4px solid #10b981;
-        }
-
-        .pattern-card h4 {
-            color: #10b981;
-            margin-bottom: 15px;
-            font-size: 15px;
-        }
-
-        .instructions {
-            background: #1e3a8a;
-            border-left: 4px solid #3b82f6;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .instructions-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #dbeafe;
+        .preview-item {
+            padding: 10px;
+            background: #374151;
+            border-radius: 4px;
+            margin: 8px 0;
         }
 
         .alert {
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            border-left: 4px solid;
-            font-size: 14px;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
         }
 
         .alert-success {
-            background: #064e3b;
-            border-color: #10b981;
-            color: #d1fae5;
+            background: #10b98133;
+            border-left: 4px solid #10b981;
+            color: #10b981;
         }
 
         .alert-error {
-            background: #7f1d1d;
-            border-color: #ef4444;
-            color: #fecaca;
+            background: #ef444433;
+            border-left: 4px solid #ef4444;
+            color: #ef4444;
         }
 
         .hidden {
             display: none;
         }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .button-group {
-                flex-direction: column;
-            }
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #10b981;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏈 Sports Game Regex Generator</h1>
-            <p>Drag and drop words to build your regex patterns</p>
-            <p class="version">version-11012025.2190 - Automatic Pattern Fixing</p>
+            <h1>🏈 Sports Regex Generator</h1>
+            <p>Drag and drop words to build regex patterns that work with any format</p>
+            <p style="font-size: 12px; margin-top: 8px; opacity: 0.5;">version-11012025.6100 - Multi-select Preview</p>
         </div>
 
-        <!-- Instructions -->
-        <div class="instructions">
-            <div class="instructions-title">📋 How to Use:</div>
-            1. Enter your sample game string below<br>
-            2. Click words to select them (Shift+Click to select multiple)<br>
-            3. Drag selected words into the appropriate zones (League, Team 1, Team 2, Time, Date)<br>
-            4. Click "Generate Regex" to create your patterns<br>
-            5. Copy and paste the patterns into Dispatcharr
-        </div>
-
-        <!-- Input Section -->
         <div class="section">
-            <div class="section-title">1. Enter Your Sample String</div>
-            <div class="form-group">
-                <label>Sample Game String</label>
-                <input type="text" id="sampleString" 
-                       value="NHL | 02 - 3pm Oilers at Red Wings Oct 31" 
-                       placeholder="e.g., NHL | 02 - 3pm Oilers at Red Wings">
-            </div>
-            <button class="btn-primary" onclick="parseString()">
-                🔍 Parse String into Words
-            </button>
+            <h3>Step 1: Enter Sample String</h3>
+            <textarea id="sampleInput" placeholder="Example: NFL | 03 - 1:00PM Saints at Bears"></textarea>
+            <button class="btn" style="margin-top: 15px;" onclick="parseSample()">📝 Parse Sample</button>
         </div>
 
-        <!-- Word Tokens -->
-        <div id="wordsSection" class="section hidden">
-            <div class="section-title">2. Drag Words to Categories</div>
-            <div class="word-container" id="wordContainer"></div>
-        </div>
-
-        <!-- Drop Zones -->
-        <div id="dropZonesSection" class="section hidden">
-            <div class="section-title">3. Organize Your Data</div>
+        <div id="dragDropSection" class="section hidden">
+            <h3>Step 2: Drag Words to Categories</h3>
+            <p style="opacity: 0.7; margin-bottom: 10px; font-size: 13px;">
+                💡 Hold Shift or Ctrl/Cmd to select multiple words. Click × to remove.
+            </p>
             
-            <div class="form-group">
-                <div class="drop-zone-label">League</div>
-                <div class="drop-zone" id="leagueZone" data-category="league"></div>
+            <label class="label">Available Words:</label>
+            <div id="wordsContainer" class="words-container"></div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                <div>
+                    <label class="label">🏆 League</label>
+                    <div id="dropLeague" class="drop-zone" data-category="league"></div>
+                </div>
+
+                <div>
+                    <label class="label">👥 Team 1</label>
+                    <div id="dropTeam1" class="drop-zone" data-category="team1"></div>
+                </div>
+
+                <div>
+                    <label class="label">👥 Team 2</label>
+                    <div id="dropTeam2" class="drop-zone" data-category="team2"></div>
+                </div>
+
+                <div>
+                    <label class="label">🕐 Time</label>
+                    <div id="dropTime" class="drop-zone" data-category="time"></div>
+                </div>
+
+                <div style="grid-column: span 2;">
+                    <label class="label">📅 Date</label>
+                    <div id="dropDate" class="drop-zone" data-category="date"></div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <div class="drop-zone-label">Team 1</div>
-                <div class="drop-zone" id="team1Zone" data-category="team1"></div>
-            </div>
-
-            <div class="form-group">
-                <div class="drop-zone-label">Team 2</div>
-                <div class="drop-zone" id="team2Zone" data-category="team2"></div>
-            </div>
-
-            <div class="form-group">
-                <div class="drop-zone-label">Time (e.g., 3pm, 7:30pm, 13:30)</div>
-                <div class="drop-zone" id="timeZone" data-category="time"></div>
-            </div>
-
-            <div class="form-group">
-                <div class="drop-zone-label">Date (e.g., Oct 31, December 15, 02)</div>
-                <div class="drop-zone" id="dateZone" data-category="date"></div>
-            </div>
-
-            <div class="button-group">
-                <button class="btn-primary" onclick="generateRegex()">
-                    🎯 Generate Regex Patterns
-                </button>
-                <button class="btn-secondary" onclick="resetAll()">
-                    🔄 Reset
-                </button>
-            </div>
+            <button class="btn" style="margin-top: 20px; width: 100%;" onclick="generateRegex()">✨ Generate Regex Patterns</button>
         </div>
 
-        <!-- Results Section -->
         <div id="resultsSection" class="section hidden">
-            <div class="section-title">4. Your Regex Patterns</div>
-            
-            <div class="pattern-grid">
-                <div class="pattern-card">
-                    <h4>Title Pattern *</h4>
-                    <div style="position: relative;">
-                        <div class="output-box" id="titleOutput"></div>
-                        <button class="copy-button" onclick="copyToClipboard('titleOutput')">📋 Copy</button>
-                    </div>
-                </div>
+            <h3>Generated Regex Patterns</h3>
+            <div id="alertBox"></div>
 
-                <div class="pattern-card">
-                    <h4>Time Pattern</h4>
-                    <div style="position: relative;">
-                        <div class="output-box" id="timeOutput"></div>
-                        <button class="copy-button" onclick="copyToClipboard('timeOutput')">📋 Copy</button>
-                    </div>
-                </div>
-
-                <div class="pattern-card">
-                    <h4>Date Pattern</h4>
-                    <div style="position: relative;">
-                        <div class="output-box" id="dateOutput"></div>
-                        <button class="copy-button" onclick="copyToClipboard('dateOutput')">📋 Copy</button>
-                    </div>
+            <div style="margin: 20px 0;">
+                <h4 style="color: #10b981; margin-bottom: 10px;">Title Pattern:</h4>
+                <div class="output-box">
+                    <button class="copy-btn" onclick="copyToClipboard('titleOutput')">📋 Copy</button>
+                    <div id="titleOutput"></div>
                 </div>
             </div>
 
-            <div id="testResults" style="margin-top: 20px;"></div>
+            <div style="margin: 20px 0;">
+                <h4 style="color: #10b981; margin-bottom: 10px;">Time Pattern:</h4>
+                <div class="output-box">
+                    <button class="copy-btn" onclick="copyToClipboard('timeOutput')">📋 Copy</button>
+                    <div id="timeOutput"></div>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h4 style="color: #10b981; margin-bottom: 10px;">Date Pattern:</h4>
+                <div class="output-box">
+                    <button class="copy-btn" onclick="copyToClipboard('dateOutput')">📋 Copy</button>
+                    <div id="dateOutput"></div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px;">Extraction Preview</h3>
+            <div id="previewBox"></div>
+
+            <button class="btn" style="margin-top: 20px;" onclick="resetAll()">🔄 Start Over</button>
         </div>
     </div>
 
     <script>
-        let draggedElement = null;
+        let sample = '';
+        let words = [];
         let wordData = {};
         let selectedWords = new Set();
+        let dragPreview = null;
 
-        function parseString() {
-            const sample = document.getElementById('sampleString').value.trim();
-            
+        function parseSample() {
+            sample = document.getElementById('sampleInput').value.trim();
             if (!sample) {
-                showAlert('Please enter a sample string.', 'error');
+                alert('Please enter a sample string');
                 return;
             }
 
-            // Split into tokens (words, numbers, and special characters)
-            // Now includes apostrophes and plus signs within words
-            const tokens = sample.match(/[A-Za-z+']+|[0-9]+|[:@|\-\/]/g) || [];
-            
-            const wordContainer = document.getElementById('wordContainer');
-            wordContainer.innerHTML = '';
+            // Split more intelligently to preserve meaningful chunks
+            words = sample.split(/(\s+|[|:@()#-])/);
             wordData = {};
             selectedWords.clear();
+            
+            const container = document.getElementById('wordsContainer');
+            container.innerHTML = '';
 
-            tokens.forEach((token, index) => {
-                const word = document.createElement('div');
-                word.className = 'word';
-                word.textContent = token;
-                word.draggable = true;
-                word.dataset.index = index;
-                word.dataset.token = token;
-                
-                word.addEventListener('dragstart', handleDragStart);
-                word.addEventListener('dragend', handleDragEnd);
-                word.addEventListener('click', handleWordClick);
-                
-                wordContainer.appendChild(word);
-                wordData[index] = { token: token, category: null };
+            words.forEach((word, idx) => {
+                if (word.trim().length > 0) {
+                    const id = 'word-' + idx;
+                    wordData[id] = {
+                        token: word,
+                        index: idx,
+                        category: null
+                    };
+
+                    const wordEl = document.createElement('div');
+                    wordEl.className = 'word';
+                    wordEl.id = id;
+                    wordEl.draggable = true;
+                    wordEl.textContent = word;
+                    wordEl.addEventListener('dragstart', handleDragStart);
+                    wordEl.addEventListener('dragend', handleDragEnd);
+                    wordEl.addEventListener('click', handleWordClick);
+                    container.appendChild(wordEl);
+                }
             });
 
-            // Show sections
-            document.getElementById('wordsSection').classList.remove('hidden');
-            document.getElementById('dropZonesSection').classList.remove('hidden');
-            
-            // Setup drop zones
             setupDropZones();
+            document.getElementById('dragDropSection').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
         }
 
         function handleWordClick(e) {
-            const word = e.currentTarget;
-            const index = word.dataset.index;
+            const wordId = e.currentTarget.id;
             
-            if (e.shiftKey) {
-                // Multi-select with shift
-                if (selectedWords.has(index)) {
-                    selectedWords.delete(index);
-                    word.classList.remove('selected');
+            if (e.shiftKey || e.ctrlKey) {
+                if (selectedWords.has(wordId)) {
+                    selectedWords.delete(wordId);
+                    e.currentTarget.classList.remove('selected');
                 } else {
-                    selectedWords.add(index);
-                    word.classList.add('selected');
+                    selectedWords.add(wordId);
+                    e.currentTarget.classList.add('selected');
                 }
             } else {
-                // Single click - clear other selections
-                document.querySelectorAll('.word.selected').forEach(w => {
-                    w.classList.remove('selected');
+                selectedWords.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('selected');
                 });
                 selectedWords.clear();
-                selectedWords.add(index);
-                word.classList.add('selected');
+                selectedWords.add(wordId);
+                e.currentTarget.classList.add('selected');
             }
         }
 
         function setupDropZones() {
-            const zones = document.querySelectorAll('.drop-zone');
-            zones.forEach(zone => {
-                zone.innerHTML = ''; // Clear existing content
+            const dropZones = document.querySelectorAll('.drop-zone');
+            dropZones.forEach(zone => {
                 zone.addEventListener('dragover', handleDragOver);
                 zone.addEventListener('drop', handleDrop);
                 zone.addEventListener('dragleave', handleDragLeave);
+                zone.innerHTML = '<span style="opacity: 0.5;">Drop words here</span>';
             });
         }
 
         function handleDragStart(e) {
-            draggedElement = e.target;
-            const index = draggedElement.dataset.index;
-            
-            // If dragging a non-selected item, select only it
-            if (!selectedWords.has(index)) {
-                document.querySelectorAll('.word.selected').forEach(w => {
-                    w.classList.remove('selected');
-                });
-                selectedWords.clear();
-                selectedWords.add(index);
-                draggedElement.classList.add('selected');
-            }
-            
-            // Create custom drag image showing all selected items
-            if (selectedWords.size > 1) {
-                const dragPreview = document.createElement('div');
-                dragPreview.style.position = 'absolute';
-                dragPreview.style.top = '-1000px';
-                dragPreview.style.display = 'flex';
-                dragPreview.style.gap = '8px';
-                dragPreview.style.padding = '8px';
-                dragPreview.style.background = '#3b82f6';
-                dragPreview.style.borderRadius = '6px';
-                dragPreview.style.opacity = '0.9';
-                
-                const sortedIndices = Array.from(selectedWords).sort((a, b) => parseInt(a) - parseInt(b));
-                sortedIndices.forEach(idx => {
-                    const word = document.querySelector(`[data-index="${idx}"]`);
-                    if (word) {
-                        const clone = word.cloneNode(true);
-                        clone.style.background = '#2563eb';
-                        clone.style.color = 'white';
-                        clone.style.margin = '0';
-                        dragPreview.appendChild(clone);
-                    }
-                });
-                
-                document.body.appendChild(dragPreview);
-                e.dataTransfer.setDragImage(dragPreview, 0, 0);
-                
-                // Remove preview after drag starts
-                setTimeout(() => dragPreview.remove(), 0);
-            }
-            
-            // Add dragging class to all selected words
-            selectedWords.forEach(idx => {
-                const word = document.querySelector(`[data-index="${idx}"]`);
-                if (word) word.classList.add('dragging');
-            });
-            
             e.dataTransfer.effectAllowed = 'move';
+            const wordId = e.target.id;
+            
+            let wordIdsToDrag = [];
+            if (selectedWords.has(wordId)) {
+                wordIdsToDrag = [...selectedWords];
+            } else {
+                wordIdsToDrag = [wordId];
+            }
+            
+            e.dataTransfer.setData('text/plain', JSON.stringify(wordIdsToDrag));
+            
+            // Create and show drag preview if multiple items
+            if (wordIdsToDrag.length > 1) {
+                if (!dragPreview) {
+                    dragPreview = document.createElement('div');
+                    dragPreview.className = 'drag-preview';
+                    document.body.appendChild(dragPreview);
+                }
+                
+                const previewText = wordIdsToDrag.map(id => wordData[id]?.token || '').join(' ');
+                dragPreview.textContent = `${previewText} (${wordIdsToDrag.length} items)`;
+                dragPreview.style.display = 'block';
+                
+                // Use the preview as drag image
+                e.dataTransfer.setDragImage(dragPreview, 0, 0);
+            }
         }
 
         function handleDragEnd(e) {
-            // Remove dragging class from all selected words
-            document.querySelectorAll('.word.dragging').forEach(w => {
-                w.classList.remove('dragging');
-            });
+            // Hide drag preview
+            if (dragPreview) {
+                dragPreview.style.display = 'none';
+            }
         }
 
         function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
+            e.preventDefault();
             e.currentTarget.classList.add('drag-over');
-            return false;
         }
 
         function handleDragLeave(e) {
@@ -581,47 +469,77 @@
         }
 
         function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
             e.preventDefault();
-            
-            const dropZone = e.currentTarget;
-            dropZone.classList.remove('drag-over');
-            
-            if (draggedElement && selectedWords.size > 0) {
-                const category = dropZone.dataset.category;
+            e.currentTarget.classList.remove('drag-over');
+
+            const wordIds = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const category = e.currentTarget.dataset.category;
+
+            wordIds.forEach(wordId => {
+                const word = wordData[wordId];
+                if (!word) return;
+
+                if (word.category) {
+                    const oldZone = document.querySelector(`[data-category="${word.category}"]`);
+                    const oldWord = oldZone.querySelector(`[data-word-id="${wordId}"]`);
+                    if (oldWord) oldWord.remove();
+                }
+
+                word.category = category;
+
+                const droppedWord = document.createElement('span');
+                droppedWord.className = 'dropped-word';
+                droppedWord.dataset.wordId = wordId;
                 
-                // Move all selected words to the drop zone
-                const sortedIndices = Array.from(selectedWords).sort((a, b) => parseInt(a) - parseInt(b));
+                const textSpan = document.createElement('span');
+                textSpan.textContent = word.token;
+                droppedWord.appendChild(textSpan);
                 
-                sortedIndices.forEach(index => {
-                    const word = document.querySelector(`[data-index="${index}"]`);
-                    if (word) {
-                        // Remove from previous location
-                        if (word.parentElement.classList.contains('drop-zone')) {
-                            word.parentElement.classList.remove('has-content');
-                        }
-                        
-                        // Add to new zone
-                        dropZone.appendChild(word);
-                        word.classList.add('in-zone');
-                        word.classList.remove('selected');
-                        
-                        // Update word data
-                        wordData[index].category = category;
-                    }
-                });
-                
-                dropZone.classList.add('has-content');
-                selectedWords.clear();
+                const removeBtn = document.createElement('span');
+                removeBtn.className = 'remove-btn';
+                removeBtn.textContent = '×';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeWord(wordId);
+                };
+                droppedWord.appendChild(removeBtn);
+
+                const placeholder = e.currentTarget.querySelector('span[style*="opacity"]');
+                if (placeholder) placeholder.remove();
+
+                e.currentTarget.appendChild(droppedWord);
+
+                const wordEl = document.getElementById(wordId);
+                if (wordEl) {
+                    wordEl.style.display = 'none';
+                    wordEl.classList.remove('selected');
+                }
+            });
+
+            selectedWords.clear();
+        }
+
+        function removeWord(wordId) {
+            const word = wordData[wordId];
+            if (!word || !word.category) return;
+
+            const zone = document.querySelector(`[data-category="${word.category}"]`);
+            const droppedWord = zone.querySelector(`[data-word-id="${wordId}"]`);
+            if (droppedWord) droppedWord.remove();
+
+            if (zone.children.length === 0) {
+                zone.innerHTML = '<span style="opacity: 0.5;">Drop words here</span>';
             }
+
+            word.category = null;
             
-            return false;
+            const wordEl = document.getElementById(wordId);
+            if (wordEl) {
+                wordEl.style.display = 'inline-block';
+            }
         }
 
         function generateRegex() {
-            // Collect categorized words
             const categories = {
                 league: [],
                 team1: [],
@@ -630,673 +548,236 @@
                 date: []
             };
 
-            const leftoverWords = [];
-
             Object.values(wordData).forEach(item => {
                 if (item.category) {
-                    categories[item.category].push(item.token);
-                } else {
-                    leftoverWords.push(item.token);
+                    categories[item.category].push({
+                        token: item.token,
+                        index: item.index
+                    });
                 }
             });
 
-            // Validate
-            if (categories.team1.length === 0 || categories.team2.length === 0) {
-                showAlert('Please drag at least Team 1 and Team 2 to generate patterns.', 'error');
-                return;
-            }
-
-            // Generate individual component patterns
-            const titlePattern = buildCompleteTitlePattern(categories, leftoverWords);
+            const titlePattern = buildTitlePattern(categories);
             const timePattern = buildTimePattern(categories.time);
             const datePattern = buildDatePattern(categories.date);
 
-            // Display results
-            displayResults(titlePattern, timePattern, datePattern, categories);
+            testPatterns(titlePattern, timePattern, datePattern, categories);
         }
 
-        function buildCompleteTitlePattern(categories, leftoverWords) {
-            let pattern = '^'; // Start anchor for full title matching
-            const sample = document.getElementById('sampleString').value.trim();
-
-            // League - escape + properly for RE2
-            if (categories.league.length > 0) {
-                pattern += '(?<league>[A-Za-z0-9\\+]+)';
-                
-                // Find what comes after league in the actual sample
-                const leagueStr = categories.league.join('');
-                const leagueIdx = sample.indexOf(leagueStr);
-                const afterLeague = sample.substring(leagueIdx + leagueStr.length).trim();
-                
-                // Check first character(s) after league
-                if (afterLeague.startsWith('|')) {
-                    pattern += '\\s*\\|\\s*';
-                } else if (afterLeague.startsWith(':')) {
-                    pattern += '\\s+'; // Space after league when colon follows game
-                } else if (afterLeague.startsWith('-')) {
-                    pattern += '\\s*-\\s*';
-                } else {
-                    pattern += '\\s+';
+        function buildTitlePattern(categories) {
+            // Find where title ends
+            let endIdx = words.length;
+            ['time', 'date'].forEach(cat => {
+                if (categories[cat].length > 0) {
+                    const minIdx = Math.min(...categories[cat].map(item => item.index));
+                    if (minIdx < endIdx) endIdx = minIdx;
                 }
-            }
+            });
 
-            // Check for game number (any digits in leftovers before team1)
-            const team1Str = categories.team1.join(' ');
-            const team1Idx = sample.indexOf(team1Str);
-            const beforeTeam1 = sample.substring(0, team1Idx);
-            
-            // Look for isolated digits (game number)
-            const gameMatch = beforeTeam1.match(/\s(\d+)\s/);
-            if (gameMatch) {
-                pattern += '(?<game>\\d+)';
-                
-                // Find what separator comes after the game number
-                const gameEndIdx = beforeTeam1.indexOf(gameMatch[1]) + gameMatch[1].length;
-                const afterGameNum = beforeTeam1.substring(gameEndIdx).trim();
-                
-                if (afterGameNum.startsWith('-')) {
-                    pattern += '\\s*-\\s*';
-                } else if (afterGameNum.startsWith(':')) {
-                    pattern += '\\s*:\\s*';
-                } else if (afterGameNum.startsWith('|')) {
-                    pattern += '\\s*\\|\\s*';
-                } else {
-                    pattern += '\\s+';
-                }
-                
-                // CRITICAL: Always check the FULL sample string for prefix pattern
-                // Count how many colons exist before team1 in the actual sample
-                const beforeTeam1Colons = (beforeTeam1.match(/:/g) || []).length;
-                const afterGameColons = (afterGameNum.match(/:/g) || []).length;
-                
-                // If there are MORE colons in beforeTeam1 than just the game separator colon
-                // then we need the prefix pattern
-                if (afterGameColons > 1 || (afterGameColons === 1 && !afterGameNum.startsWith(':'))) {
-                    // There's additional colon content before team1
-                    const afterSeparator = afterGameNum.replace(/^[:\-|]\s*/, '');
-                    const colonIdx = afterSeparator.indexOf(':');
-                    
-                    if (colonIdx !== -1) {
-                        // Check if it's a time colon or prefix colon
-                        const beforeColon = afterSeparator.substring(0, colonIdx);
-                        const isTimeColon = /\d{1,2}$/.test(beforeColon.trim());
-                        
-                        if (!isTimeColon) {
-                            // It's a prefix - add the optional pattern
-                            pattern += '(?:.*?:\\s*)?';
-                        } else {
-                            // It's a time
-                            pattern += '(?:\\d{1,2}:\\d{2}\\s*(?:AM|PM|am|pm)?\\s+)?';
+            let parts = [];
+            let lastIdx = -1;
+
+            // Process league, team1, team2
+            ['league', 'team1', 'team2'].forEach(cat => {
+                if (categories[cat].length === 0) return;
+
+                const sorted = [...categories[cat]].sort((a, b) => a.index - b.index);
+                const firstIdx = sorted[0].index;
+                const lastItemIdx = sorted[sorted.length - 1].index;
+
+                // Add literals before this capture
+                if (lastIdx < firstIdx - 1) {
+                    for (let i = (lastIdx + 1); i < firstIdx; i++) {
+                        if (i < endIdx && words[i] && words[i].length > 0) {
+                            parts.push({ type: 'literal', value: escapeRegex(words[i]) });
                         }
                     }
-                } else if (/\d+\s*(?:AM|PM|am|pm)/i.test(afterGameNum.replace(/^[:\-|]\s*/, ''))) {
-                    // Just time, no prefix
-                    pattern += '(?:\\d{1,2}(?::\\d{2})?\\s*(?:AM|PM|am|pm)?\\s+)?';
+                } else if (lastIdx === -1 && firstIdx > 0) {
+                    for (let i = 0; i < firstIdx; i++) {
+                        if (i < endIdx && words[i] && words[i].length > 0) {
+                            parts.push({ type: 'literal', value: escapeRegex(words[i]) });
+                        }
+                    }
+                }
+
+                // Build capture for this category
+                let combined = '';
+                for (let i = firstIdx; i <= lastItemIdx; i++) {
+                    if (words[i]) combined += words[i];
+                }
+
+                parts.push({
+                    type: 'capture',
+                    name: cat,
+                    pattern: buildCapturePattern(combined, cat)
+                });
+
+                lastIdx = lastItemIdx;
+            });
+
+            // Add remaining literals
+            for (let i = lastIdx + 1; i < endIdx; i++) {
+                if (words[i] && words[i].length > 0) {
+                    parts.push({ type: 'literal', value: escapeRegex(words[i]) });
                 }
             }
 
-            // Find separator between teams
-            const team2Str = categories.team2.join(' ');
-            const team2Idx = sample.indexOf(team2Str);
-            const betweenTeams = sample.substring(team1Idx + team1Str.length, team2Idx).trim();
-            
-            let teamSeparatorRegex = '';
-            if (betweenTeams.includes('@')) {
-                teamSeparatorRegex = '@';
-            } else if (betweenTeams.toLowerCase().includes('vs')) {
-                teamSeparatorRegex = 'vs|VS';
-            } else if (betweenTeams.toLowerCase().includes('at')) {
-                teamSeparatorRegex = 'at|AT';
-            } else {
-                teamSeparatorRegex = 'at|vs|@';
-            }
-
-            // Team 1 - RE2 compatible: match word chars, spaces, hyphens (more explicit)
-            pattern += '(?<team1>[A-Za-z][A-Za-z\\s]*?)';
-            
-            // Add whitespace and separator
-            pattern += '\\s+(?:' + teamSeparatorRegex + ')\\s+';
-
-            // Team 2 - check if @ follows
-            const afterTeam2 = sample.substring(team2Idx + team2Str.length).trim();
-            
-            if (afterTeam2.includes('@')) {
-                // Match letters/spaces (more explicit for RE2)
-                pattern += '(?<team2>[A-Za-z][A-Za-z\\s]*?)';
-                // Then match the @ and everything after
-                pattern += '\\s+@.*';
-            } else {
-                // Match to end - letters and spaces, then any remaining content
-                pattern += '(?<team2>[A-Za-z][A-Za-z\\s]*).*';
-            }
-
-            pattern += '$'; // End anchor for full title matching
-
-            return pattern;
-        }
-
-        function findSeparatorAfter(sample, searchStr, leftoverWords) {
-            const idx = sample.indexOf(searchStr);
-            if (idx === -1) return null;
-            
-            const afterStr = sample.substring(idx + searchStr.length).trim();
-            
-            // Check for specific separators in leftover words
-            if (leftoverWords.includes(':') || afterStr.startsWith(':')) {
-                return '\\s*:\\s*';
-            } else if (leftoverWords.includes('|') || afterStr.startsWith('|')) {
-                return '\\s*\\|\\s*';
-            } else if (leftoverWords.includes('-') || afterStr.startsWith('-')) {
-                return '\\s*-\\s*';
-            }
-            
-            return '\\s+';
-        }
-
-        function findTeamSeparator(leftoverWords) {
-            // Check leftover words for team separators
-            const leftoverStr = leftoverWords.join('').toLowerCase();
-            
-            if (leftoverWords.includes('@')) {
-                return '@';
-            } else if (leftoverStr.includes('vs')) {
-                return '(?:vs|VS)';
-            } else if (leftoverStr.includes('at')) {
-                return '(?:at|AT)';
-            }
-            
-            // Default - support all
-            return '(?:at|vs|@)';
-        }
-
-        function buildTimePattern(timeTokens) {
-            if (timeTokens.length === 0) {
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?:AM|PM|am|pm))?';
-            }
-
-            const timeStr = timeTokens.join('');
-            
-            // Check format
-            if (/\d+:\d+/.test(timeStr)) {
-                // Has colon
-                if (/[ap]m/i.test(timeStr)) {
-                    return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?:AM|PM|am|pm))';
-                } else {
-                    // 24-hour format
-                    return '(?<hour>\\d{1,2}):(?<minute>\\d{2})';
-                }
-            } else if (/\d+[ap]m/i.test(timeStr)) {
-                // Just hour with am/pm, no colon
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?:AM|PM|am|pm))';
-            } else {
-                // Default flexible pattern
-                return '(?<hour>\\d{1,2})(?::(?<minute>\\d{2}))?\\s*(?<ampm>(?:AM|PM|am|pm))?';
-            }
-        }
-
-        function buildDatePattern(dateTokens) {
-            if (dateTokens.length === 0) {
-                return '';
-            }
-
-            const dateStr = dateTokens.join(' ');
-            const sample = document.getElementById('sampleString').value.trim();
-
-            // Check if date comes after @ symbol
-            const hasAtBeforeDate = sample.includes('@') && sample.indexOf('@') < sample.indexOf(dateTokens[0]);
-
+            // Build final pattern
             let pattern = '';
-
-            // If @ symbol precedes date, anchor to it
-            if (hasAtBeforeDate) {
-                pattern += '@\\s+';
-            }
-
-            // Check if it has month name
-            if (/[A-Za-z]+/.test(dateStr)) {
-                // Month name format - only match actual month names
-                pattern += '(?<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\\s+(?<day>\\d{1,2})(?:\\s+(?<year>\\d{4}))?';
-            } else if (dateStr.includes('/')) {
-                // Slash format
-                pattern += '(?<month>\\d{1,2})/(?<day>\\d{1,2})(?:/(?<year>\\d{2,4}))?';
-            } else {
-                // Just day number (game number context)
-                pattern += '(?<day>\\d{1,2})';
-            }
+            parts.forEach(part => {
+                if (part.type === 'literal') {
+                    pattern += part.value;
+                } else {
+                    pattern += `(?<${part.name}>${part.pattern})`;
+                }
+            });
 
             return pattern;
+        }
+
+        function buildTimePattern(timeWords) {
+            if (timeWords.length === 0) return '';
+
+            const sorted = [...timeWords].sort((a, b) => a.index - b.index);
+            let text = '';
+            for (let i = 0; i < sorted.length; i++) {
+                text += sorted[i].token;
+            }
+
+            // Detect time format
+            if (/\d{1,2}:\d{2}:\d{2}/.test(text)) {
+                return '(?<hour>\\d{1,2}):(?<minute>\\d{2}):(?<second>\\d{2})';
+            } else if (/\d{1,2}:\d{2}/.test(text)) {
+                return '(?<hour>\\d{1,2}):(?<minute>\\d{2})';
+            } else if (/\d+\s*(AM|PM|am|pm)/i.test(text)) {
+                return '(?<hour>\\d+):?(?<minute>\\d{2})?\\s*(?<ampm>AM|PM|am|pm)';
+            }
+            return '.*?(?<time>' + escapeRegex(text) + ')';
+        }
+
+        function buildDatePattern(dateWords) {
+            if (dateWords.length === 0) return '';
+
+            const sorted = [...dateWords].sort((a, b) => a.index - b.index);
+            let text = '';
+            for (let i = 0; i < sorted.length; i++) {
+                text += sorted[i].token;
+            }
+
+            if (/\d{4}-\d{2}-\d{2}/.test(text)) {
+                return '(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})';
+            } else if (/\d{2}\/\d{2}\/\d{4}/.test(text)) {
+                return '(?<month>\\d{2})/(?<day>\\d{2})/(?<year>\\d{4})';
+            } else if (/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(text)) {
+                return '(?<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s*(?<day>\\d{1,2})';
+            }
+            return '(?<date>' + escapeRegex(text) + ')';
+        }
+
+        function buildCapturePattern(text, type) {
+            text = text.trim();
+            
+            if (type === 'league') {
+                if (/^[A-Z]+$/.test(text)) return '[A-Z]+';
+                if (/^[A-Z]+\+$/.test(text)) return '[A-Z]+\\+';
+                return '[A-Za-z0-9+]+';
+            }
+            
+            if (type === 'team1' || type === 'team2') {
+                if (/\([A-Z]+\)/.test(text)) {
+                    return '[A-Za-z]+\\s*\\([A-Z]+\\)';
+                }
+                const wordCount = text.split(/\s+/).length;
+                if (wordCount === 1) return '[A-Za-z]+';
+                if (wordCount === 2) return '[A-Za-z]+\\s+[A-Za-z]+';
+                return '[A-Za-z]+(?:\\s+[A-Za-z]+)+';
+            }
+            
+            return escapeRegex(text);
         }
 
         function escapeRegex(str) {
             return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
-        function displayResults(titlePattern, timePattern, datePattern, categories) {
-            document.getElementById('titleOutput').textContent = titlePattern;
-            document.getElementById('timeOutput').textContent = timePattern;
-            document.getElementById('dateOutput').textContent = datePattern;
+        function testPatterns(titlePattern, timePattern, datePattern, categories) {
+            const alertBox = document.getElementById('alertBox');
+            const titleOutput = document.getElementById('titleOutput');
+            const timeOutput = document.getElementById('timeOutput');
+            const dateOutput = document.getElementById('dateOutput');
+            const previewBox = document.getElementById('previewBox');
 
-            // Test the patterns ACTUALLY against the sample string
-            const sample = document.getElementById('sampleString').value.trim();
-            const testResults = document.getElementById('testResults');
-            
-            // Try to match the patterns
-            let titleMatch = null;
-            let timeMatch = null;
-            let dateMatch = null;
-            let hasErrors = false;
-            let errorMessages = [];
-            let warnings = [];
-            
-            try {
-                const titleRegex = new RegExp(titlePattern);
-                titleMatch = sample.match(titleRegex);
-                if (!titleMatch) {
-                    hasErrors = true;
-                    errorMessages.push('⚠️ Title pattern did not match the sample title');
-                }
-            } catch (e) {
-                hasErrors = true;
-                errorMessages.push('❌ Title pattern error: ' + e.message);
-            }
-            
-            if (timePattern) {
+            titleOutput.textContent = titlePattern || 'No title pattern';
+            timeOutput.textContent = timePattern || 'No time pattern';
+            dateOutput.textContent = datePattern || 'No date pattern';
+
+            let alerts = [];
+            let previewHtml = '';
+
+            // Test title
+            if (titlePattern) {
                 try {
-                    const timeRegex = new RegExp(timePattern);
-                    timeMatch = sample.match(timeRegex);
-                    if (!timeMatch) {
-                        errorMessages.push('⚠️ Time pattern did not match');
+                    const regex = new RegExp(titlePattern);
+                    const match = sample.match(regex);
+
+                    if (match && match.groups) {
+                        alerts.push('<div class="alert alert-success">✅ Title matched!</div>');
+                        Object.keys(match.groups).forEach(name => {
+                            previewHtml += `<div class="preview-item"><strong>${name}:</strong> <span style="color: #10b981;">${match.groups[name]}</span></div>`;
+                        });
+                    } else {
+                        alerts.push('<div class="alert alert-error">⚠️ Title pattern did not match</div>');
                     }
                 } catch (e) {
-                    errorMessages.push('❌ Time pattern error: ' + e.message);
+                    alerts.push('<div class="alert alert-error">❌ Title error: ' + e.message + '</div>');
                 }
             }
-            
+
+            // Test time
+            if (timePattern) {
+                try {
+                    const regex = new RegExp(timePattern);
+                    const match = sample.match(regex);
+                    if (match) {
+                        alerts.push('<div class="alert alert-success">✅ Time matched!</div>');
+                        const time = match.groups?.hour ? `${match.groups.hour}:${match.groups.minute || '00'}${match.groups.ampm ? ' ' + match.groups.ampm : ''}` : match[0];
+                        previewHtml += `<div class="preview-item"><strong>Time:</strong> <span style="color: #10b981;">${time}</span></div>`;
+                    }
+                } catch (e) {}
+            }
+
+            // Test date
             if (datePattern) {
                 try {
-                    const dateRegex = new RegExp(datePattern);
-                    dateMatch = sample.match(dateRegex);
-                    if (!dateMatch) {
-                        errorMessages.push('⚠️ Date pattern did not match');
+                    const regex = new RegExp(datePattern);
+                    const match = sample.match(regex);
+                    if (match) {
+                        alerts.push('<div class="alert alert-success">✅ Date matched!</div>');
+                        const date = match.groups?.year ? `${match.groups.year}-${match.groups.month}-${match.groups.day}` : match.groups?.month ? `${match.groups.month} ${match.groups.day}` : match[0];
+                        previewHtml += `<div class="preview-item"><strong>Date:</strong> <span style="color: #10b981;">${date}</span></div>`;
                     }
-                } catch (e) {
-                    errorMessages.push('❌ Date pattern error: ' + e.message);
-                }
+                } catch (e) {}
             }
-            
-            // Check if extracted values match what user dragged
-            let needsRefinement = false;
-            if (titleMatch && titleMatch.groups) {
-                const expectedTeam1 = categories.team1.join(' ').trim();
-                const extractedTeam1 = (titleMatch.groups.team1 || '').trim();
-                const expectedTeam2 = categories.team2.join(' ').trim();
-                const extractedTeam2 = (titleMatch.groups.team2 || '').trim();
-                
-                if (expectedTeam1 && extractedTeam1 !== expectedTeam1) {
-                    warnings.push(`⚠️ Team 1 mismatch: Expected "${expectedTeam1}" but got "${extractedTeam1}"`);
-                    needsRefinement = true;
-                }
-                
-                if (expectedTeam2 && extractedTeam2 !== expectedTeam2) {
-                    warnings.push(`⚠️ Team 2 mismatch: Expected "${expectedTeam2}" but got "${extractedTeam2}"`);
-                    needsRefinement = true;
-                }
-            }
-            
-            let html = '';
-            
-            if (hasErrors) {
-                html += '<div class="alert alert-error">';
-                errorMessages.forEach(msg => {
-                    html += msg + '<br>';
-                });
-                html += '<button onclick="attemptRefinement()" style="margin-top: 10px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">🔧 Auto-Fix Pattern</button>';
-                html += '</div>';
-                
-                // AUTOMATICALLY trigger auto-fix after displaying the error
-                setTimeout(() => {
-                    showAlert('🤖 Automatically attempting to fix pattern...', 'success');
-                    attemptRefinement();
-                }, 1500);
-                
-            } else if (needsRefinement) {
-                html += '<div class="alert alert-error">';
-                html += '⚠️ Pattern extracted different values than expected<br>';
-                warnings.forEach(msg => {
-                    html += msg + '<br>';
-                });
-                html += '<button onclick="attemptRefinement()" style="margin-top: 10px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">🔧 Auto-Fix Pattern</button>';
-                html += '</div>';
-                
-                // AUTOMATICALLY trigger auto-fix after displaying the warning
-                setTimeout(() => {
-                    showAlert('🤖 Automatically attempting to fix pattern...', 'success');
-                    attemptRefinement();
-                }, 1500);
-                
-            } else {
-                html += '<div class="alert alert-success">✓ All patterns matched successfully!</div>';
-            }
-            
-            html += '<div style="background: #1f2937; padding: 20px; border-radius: 6px;">';
-            html += '<h4 style="color: #10b981; margin-bottom: 15px;">Extracted Data Preview (Actual Regex Results):</h4>';
-            
-            // League
-            html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-            if (titleMatch && titleMatch.groups && titleMatch.groups.league) {
-                html += '<strong>League:</strong> <span style="color: #10b981;">' + titleMatch.groups.league + '</span>';
-            } else {
-                html += '<strong>League:</strong> <span style="color: #ef4444;">Not captured</span>';
-            }
-            html += '</div>';
-            
-            // Game number
-            if (titleMatch && titleMatch.groups && titleMatch.groups.game) {
-                html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-                html += '<strong>Game:</strong> <span style="color: #10b981;">' + titleMatch.groups.game + '</span>';
-                html += '</div>';
-            }
-            
-            // Team 1
-            html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-            if (titleMatch && titleMatch.groups && titleMatch.groups.team1) {
-                const extractedTeam1 = titleMatch.groups.team1.trim();
-                const expectedTeam1 = categories.team1.join(' ').trim();
-                const isCorrect = extractedTeam1 === expectedTeam1;
-                html += '<strong>Team 1:</strong> <span style="color: ' + (isCorrect ? '#10b981' : '#ef4444') + ';">' + extractedTeam1 + '</span>';
-                if (!isCorrect && expectedTeam1) {
-                    html += ' <span style="color: #9ca3af; font-size: 12px;">(Expected: ' + expectedTeam1 + ')</span>';
-                }
-            } else {
-                html += '<strong>Team 1:</strong> <span style="color: #ef4444;">Not captured</span>';
-            }
-            html += '</div>';
-            
-            // Team 2
-            html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-            if (titleMatch && titleMatch.groups && titleMatch.groups.team2) {
-                const extractedTeam2 = titleMatch.groups.team2.trim();
-                const expectedTeam2 = categories.team2.join(' ').trim();
-                const isCorrect = extractedTeam2 === expectedTeam2;
-                html += '<strong>Team 2:</strong> <span style="color: ' + (isCorrect ? '#10b981' : '#ef4444') + ';">' + extractedTeam2 + '</span>';
-                if (!isCorrect && expectedTeam2) {
-                    html += ' <span style="color: #9ca3af; font-size: 12px;">(Expected: ' + expectedTeam2 + ')</span>';
-                }
-            } else {
-                html += '<strong>Team 2:</strong> <span style="color: #ef4444;">Not captured</span>';
-            }
-            html += '</div>';
-            
-            // Time
-            if (timePattern) {
-                html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-                if (timeMatch && timeMatch.groups) {
-                    let timeStr = '';
-                    if (timeMatch.groups.hour) timeStr += timeMatch.groups.hour;
-                    if (timeMatch.groups.minute) timeStr += ':' + timeMatch.groups.minute;
-                    if (timeMatch.groups.ampm) timeStr += ' ' + timeMatch.groups.ampm;
-                    html += '<strong>Time:</strong> <span style="color: #10b981;">' + (timeStr || 'Matched but no capture groups') + '</span>';
-                } else {
-                    html += '<strong>Time:</strong> <span style="color: #ef4444;">Not captured</span>';
-                }
-                html += '</div>';
-            }
-            
-            // Date
-            if (datePattern) {
-                html += '<div style="padding: 10px; background: #374151; border-radius: 4px; margin-bottom: 10px;">';
-                if (dateMatch && dateMatch.groups) {
-                    let dateStr = '';
-                    if (dateMatch.groups.month) dateStr += dateMatch.groups.month + ' ';
-                    if (dateMatch.groups.day) dateStr += dateMatch.groups.day;
-                    if (dateMatch.groups.year) dateStr += ', ' + dateMatch.groups.year;
-                    html += '<strong>Date:</strong> <span style="color: #10b981;">' + (dateStr.trim() || 'Matched but no capture groups') + '</span>';
-                } else {
-                    html += '<strong>Date:</strong> <span style="color: #ef4444;">Not captured</span>';
-                }
-                html += '</div>';
-            }
-            
-            html += '</div>';
-            
-            testResults.innerHTML = html;
+
+            alertBox.innerHTML = alerts.join('');
+            previewBox.innerHTML = previewHtml;
+
             document.getElementById('resultsSection').classList.remove('hidden');
-            
-            // Scroll to results
-            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        function attemptRefinement() {
-            showAlert('🤖 Rebuilding entire pattern from scratch...', 'success');
-            
-            // Get current categories
-            const categories = {
-                league: [],
-                team1: [],
-                team2: [],
-                time: [],
-                date: []
-            };
-
-            Object.values(wordData).forEach(item => {
-                if (item.category) {
-                    categories[item.category].push(item.token);
-                }
-            });
-            
-            const sample = document.getElementById('sampleString').value.trim();
-            const expectedTeam1 = categories.team1.join(' ').trim();
-            const expectedTeam2 = categories.team2.join(' ').trim();
-            
-            console.log('Sample:', sample);
-            console.log('Expected Team1:', expectedTeam1);
-            console.log('Expected Team2:', expectedTeam2);
-            
-            try {
-                // Find exact positions of each element in the sample
-                const leagueStr = categories.league.join(' ');
-                const leagueIdx = leagueStr ? sample.indexOf(leagueStr) : -1;
-                
-                const team1Idx = sample.indexOf(expectedTeam1);
-                const team2Idx = sample.indexOf(expectedTeam2);
-                
-                if (team1Idx === -1 || team2Idx === -1) {
-                    showAlert('❌ Could not find teams in sample', 'error');
-                    return;
-                }
-                
-                // Build pattern piece by piece based on actual sample structure
-                let newPattern = '^';
-                let currentIdx = 0;
-                
-                // LEAGUE
-                if (leagueIdx !== -1 && leagueIdx === 0) {
-                    newPattern += '(?<league>[A-Za-z0-9\\+]+)';
-                    currentIdx = leagueStr.length;
-                    
-                    // What's between league and next element?
-                    const afterLeague = sample.substring(currentIdx).trim();
-                    if (afterLeague.startsWith('|')) {
-                        newPattern += '\\s*\\|\\s*';
-                    } else if (afterLeague.startsWith(':')) {
-                        newPattern += '\\s*:\\s*';
-                    } else {
-                        newPattern += '\\s+';
-                    }
-                }
-                
-                // GAME NUMBER
-                const gameMatch = sample.match(/(\d+)/);
-                if (gameMatch) {
-                    const gameNum = gameMatch[1];
-                    const gameIdx = sample.indexOf(gameNum);
-                    
-                    newPattern += '(?<game>\\d+)';
-                    
-                    // What's between game number and team1?
-                    const betweenGameAndTeam1 = sample.substring(gameIdx + gameNum.length, team1Idx);
-                    console.log('Between game and team1:', betweenGameAndTeam1);
-                    
-                    // Check for separator characters
-                    if (betweenGameAndTeam1.includes('-')) {
-                        newPattern += '\\s*-\\s*';
-                    } else if (betweenGameAndTeam1.includes('|')) {
-                        newPattern += '\\s*\\|\\s*';
-                    } else if (betweenGameAndTeam1.includes(':')) {
-                        newPattern += '\\s*:\\s*';
-                    } else {
-                        newPattern += '\\s+';
-                    }
-                    
-                    // Check if there's time/other content before team1
-                    const trimmed = betweenGameAndTeam1.replace(/[\s\-:|]/g, '').trim();
-                    if (trimmed.length > 0) {
-                        // There's content (like "3pm") between game and team1
-                        // Match it loosely
-                        newPattern += '.*?\\s+';
-                        showAlert('✓ Found content between game and team1: "' + trimmed + '"', 'success');
-                    }
-                }
-                
-                // TEAM 1
-                const team1Words = expectedTeam1.split(/\s+/).length;
-                if (team1Words === 1) {
-                    newPattern += '(?<team1>[A-Za-z]+)';
-                } else if (team1Words === 2) {
-                    newPattern += '(?<team1>[A-Za-z]+\\s+[A-Za-z]+)';
-                } else {
-                    newPattern += '(?<team1>[A-Za-z]+(?:\\s+[A-Za-z]+){' + (team1Words - 1) + '})';
-                }
-                
-                // SEPARATOR (vs/at/@)
-                const betweenTeams = sample.substring(team1Idx + expectedTeam1.length, team2Idx);
-                console.log('Between teams:', betweenTeams);
-                
-                if (betweenTeams.toLowerCase().includes('vs')) {
-                    newPattern += '\\s+(?:vs|VS)\\s+';
-                } else if (betweenTeams.toLowerCase().includes('at')) {
-                    newPattern += '\\s+(?:at|AT)\\s+';
-                } else if (betweenTeams.includes('@')) {
-                    newPattern += '\\s+@\\s+';
-                } else {
-                    newPattern += '\\s+(?:vs|VS|at|AT|@)\\s+';
-                }
-                
-                // TEAM 2 - THE CRITICAL PART
-                const team2Words = expectedTeam2.split(/\s+/).length;
-                showAlert('📊 Team 2 has ' + team2Words + ' word(s)', 'success');
-                
-                if (team2Words === 1) {
-                    newPattern += '(?<team2>[A-Za-z]+)';
-                } else if (team2Words === 2) {
-                    newPattern += '(?<team2>[A-Za-z]+\\s+[A-Za-z]+)';
-                } else if (team2Words === 3) {
-                    newPattern += '(?<team2>[A-Za-z]+\\s+[A-Za-z]+\\s+[A-Za-z]+)';
-                } else {
-                    newPattern += '(?<team2>[A-Za-z]+(?:\\s+[A-Za-z]+){' + (team2Words - 1) + '})';
-                }
-                
-                // AFTER TEAM 2
-                const afterTeam2 = sample.substring(team2Idx + expectedTeam2.length);
-                console.log('After team2:', afterTeam2);
-                
-                if (afterTeam2.trim().startsWith('@')) {
-                    newPattern += '\\s+@.*$';
-                } else if (categories.date.length > 0 || categories.time.length > 0) {
-                    // Date or time exists - match rest loosely
-                    newPattern += '(?:\\s+.*)?$';
-                } else {
-                    newPattern += '$';
-                }
-                
-                showAlert('🧪 Testing new pattern...', 'success');
-                console.log('Generated pattern:', newPattern);
-                
-                // Test the new pattern
-                const testRegex = new RegExp(newPattern);
-                const testMatch = sample.match(testRegex);
-                
-                if (testMatch && testMatch.groups) {
-                    const fixedTeam1 = (testMatch.groups.team1 || '').trim();
-                    const fixedTeam2 = (testMatch.groups.team2 || '').trim();
-                    
-                    console.log('Match successful!');
-                    console.log('Team1 extracted:', fixedTeam1);
-                    console.log('Team2 extracted:', fixedTeam2);
-                    
-                    showAlert('📊 Team 1: "' + fixedTeam1 + '" ' + (fixedTeam1 === expectedTeam1 ? '✓' : '✗'), fixedTeam1 === expectedTeam1 ? 'success' : 'error');
-                    showAlert('📊 Team 2: "' + fixedTeam2 + '" ' + (fixedTeam2 === expectedTeam2 ? '✓' : '✗'), fixedTeam2 === expectedTeam2 ? 'success' : 'error');
-                    
-                    if (fixedTeam1 === expectedTeam1 && fixedTeam2 === expectedTeam2) {
-                        showAlert('🎉 Pattern fixed successfully!', 'success');
-                        document.getElementById('titleOutput').textContent = newPattern;
-                        
-                        // Update display
-                        setTimeout(() => {
-                            const currentTimePattern = document.getElementById('timeOutput').textContent;
-                            const currentDatePattern = document.getElementById('dateOutput').textContent;
-                            displayResults(newPattern, currentTimePattern, currentDatePattern, categories);
-                        }, 1500);
-                    }
-                } else {
-                    showAlert('❌ Pattern does not match sample', 'error');
-                    console.log('Pattern failed to match');
-                    console.log('Pattern:', newPattern);
-                    console.log('Sample:', sample);
-                }
-                
-            } catch (e) {
-                showAlert('❌ Error: ' + e.message, 'error');
-                console.error('Auto-fix error:', e);
-            }
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
         }
 
         function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            const text = element.textContent;
-            
-            navigator.clipboard.writeText(text).then(() => {
-                showAlert('Copied to clipboard!', 'success');
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showAlert('Copied to clipboard!', 'success');
-            });
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => alert('✓ Copied!'));
         }
 
         function resetAll() {
-            document.getElementById('wordsSection').classList.add('hidden');
-            document.getElementById('dropZonesSection').classList.add('hidden');
+            document.getElementById('sampleInput').value = '';
+            document.getElementById('dragDropSection').classList.add('hidden');
             document.getElementById('resultsSection').classList.add('hidden');
             wordData = {};
-        }
-
-        function showAlert(message, type) {
-            const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
-            
-            const alert = document.createElement('div');
-            alert.className = `alert ${alertClass}`;
-            alert.textContent = message;
-            alert.style.position = 'fixed';
-            alert.style.top = '20px';
-            alert.style.right = '20px';
-            alert.style.zIndex = '9999';
-            alert.style.maxWidth = '400px';
-            alert.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
-            
-            document.body.appendChild(alert);
-            
-            setTimeout(() => {
-                alert.style.transition = 'opacity 0.3s';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 300);
-            }, 3000);
+            words = [];
+            selectedWords.clear();
         }
     </script>
 </body>
