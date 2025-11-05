@@ -116,11 +116,11 @@
         }
 
         .drop-zone {
-            padding: 15px;
+            padding: 12px;
             background: #1f2937;
             border: 2px dashed #10b981;
             border-radius: 4px;
-            min-height: 60px;
+            min-height: 50px;
             margin: 10px 0;
             transition: all 0.2s;
             user-select: none;
@@ -136,31 +136,31 @@
 
         .dropped-word {
             display: inline-block;
-            padding: 6px 10px;
+            padding: 8px 12px;
             margin: 4px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 13px;
+            font-size: 15px;
             position: relative;
-            padding-right: 25px;
+            padding-right: 30px;
             background: #10b981;
             color: white;
         }
 
         .dropped-word .remove-btn {
             position: absolute;
-            right: 5px;
+            right: 8px;
             top: 50%;
             transform: translateY(-50%);
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             background: rgba(0,0,0,0.3);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
@@ -216,6 +216,48 @@
             background: #4b5563;
         }
 
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
         .preview-item {
             padding: 10px;
             background: #374151;
@@ -259,7 +301,7 @@
         <div class="header">
             <h1>🏈 Sports Regex Generator</h1>
             <p>Drag and drop words to build regex patterns</p>
-            <p style="font-size: 12px; margin-top: 8px; opacity: 0.5;">version-11012025.7200</p>
+            <p style="font-size: 12px; margin-top: 8px; opacity: 0.5;">version-11012025.7600</p>
         </div>
 
         <div class="section">
@@ -341,6 +383,8 @@
             <button class="btn" style="margin-top: 20px;" onclick="resetAll()">🔄 Start Over</button>
         </div>
     </div>
+
+    <div id="toast" class="toast">✓ Copied to clipboard!</div>
 
     <script>
         let sample = '';
@@ -709,21 +753,12 @@
             
             if (type === 'team1' || type === 'team2') {
                 if (/\([A-Z]+\)/.test(text)) {
-                    return '[A-Za-z.]+\\s*\\([A-Z]+\\)';
+                    return '[A-Za-z0-9.]+\\s*\\([A-Z]+\\)';
                 }
                 
-                const wordParts = text.split(/\s+/).filter(w => w.length > 0);
-                const wordCount = wordParts.length;
-                
-                if (wordCount === 1) {
-                    return "[A-Za-z'.]+";
-                } else if (wordCount === 2) {
-                    return "[A-Za-z'.]+\\s+[A-Za-z'.]+";
-                } else if (wordCount === 3) {
-                    return "[A-Za-z'.]+\\s+[A-Za-z'.]+\\s+[A-Za-z'.]+";
-                } else {
-                    return "[A-Za-z'.]+(?:\\s+[A-Za-z'.]+){" + (wordCount - 1) + '}';
-                }
+                // FLEXIBLE: Match 1 or more words (not exact count)
+                // This allows the pattern to work with different team name lengths
+                return "[A-Za-z0-9'.]+(?:\\s+[A-Za-z0-9'.]+)*";
             }
             
             return escapeRegex(text);
@@ -798,7 +833,13 @@
 
         function copyToClipboard(elementId) {
             const text = document.getElementById(elementId).textContent;
-            navigator.clipboard.writeText(text).then(() => alert('✓ Copied!'));
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            });
         }
 
         function resetAll() {
