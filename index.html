@@ -301,7 +301,7 @@
         <div class="header">
             <h1>🏈 Sports Regex Generator</h1>
             <p>Drag and drop words to build regex patterns</p>
-            <p style="font-size: 12px; margin-top: 8px; opacity: 0.5;">version-11012025.7600</p>
+            <p style="font-size: 12px; margin-top: 8px; opacity: 0.5;">version-11012025.7800</p>
         </div>
 
         <div class="section">
@@ -752,13 +752,22 @@
             }
             
             if (type === 'team1' || type === 'team2') {
+                // Special case: if text contains parentheses like "Nets (BKN)"
                 if (/\([A-Z]+\)/.test(text)) {
                     return '[A-Za-z0-9.]+\\s*\\([A-Z]+\\)';
                 }
                 
-                // FLEXIBLE: Match 1 or more words (not exact count)
-                // This allows the pattern to work with different team name lengths
-                return "[A-Za-z0-9'.]+(?:\\s+[A-Za-z0-9'.]+)*";
+                // Check if team name contains standalone numbers (like "1000" in "ATP 1000 Tennis")
+                const hasStandaloneNumbers = /\s\d+\s/.test(text) || /^\d+\s/.test(text) || /\s\d+$/.test(text);
+                
+                if (hasStandaloneNumbers) {
+                    // Allow words to start with digits for cases like "ATP 1000 Tennis"
+                    return "[A-Za-z0-9'.]+(?:\\s+[A-Za-z0-9'.]+)*";
+                } else {
+                    // Normal case: words must start with letters to avoid capturing time
+                    // This prevents matching "8 PM" after "THOMPSON"
+                    return "[A-Za-z][A-Za-z0-9'.]*(?:\\s+[A-Za-z][A-Za-z0-9'.]*)*";
+                }
             }
             
             return escapeRegex(text);
